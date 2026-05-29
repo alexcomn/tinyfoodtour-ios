@@ -12,7 +12,7 @@ ROOT        = os.path.dirname(os.path.abspath(__file__))
 LOGO_SRC    = os.path.join(ROOT, "../tiny-food-tour/src/assets/splash-logo.png")
 ICON_DIR    = os.path.join(ROOT, "TinyFoodTour/Assets.xcassets/AppIcon.appiconset")
 LAUNCH_DIR  = os.path.join(ROOT, "TinyFoodTour/Assets.xcassets/LaunchImage.imageset")
-TOMATO      = (194, 3, 3, 255)   # #C20303
+TOMATO      = (249, 6, 6, 255)   # #F90606 — matches Splash.tsx bg-tomato (HSL 0 96% 50%)
 
 os.makedirs(ICON_DIR,   exist_ok=True)
 os.makedirs(LAUNCH_DIR, exist_ok=True)

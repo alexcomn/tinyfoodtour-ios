@@ -17,6 +17,7 @@ struct QuizView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .darkStatusBar()
         .navigationDestination(isPresented: $navigateToGenerating) {
             GeneratingView(answers: vm.answers)
         }
@@ -142,8 +143,9 @@ struct QuizView: View {
         .background(
             Color(.systemBackground)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
+                .ignoresSafeArea(edges: .bottom)
         )
-        .padding(.bottom, 20)
+        .padding(.bottom, max(20, UIApplication.safeAreaBottom))
     }
 
     private func advance() {

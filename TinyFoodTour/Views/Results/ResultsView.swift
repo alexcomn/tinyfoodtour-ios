@@ -75,6 +75,7 @@ struct ResultsView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .darkStatusBar()
         .navigationDestination(isPresented: $navigateToLive) {
             LiveTourView(tourId: tour.id)
                 .environmentObject(authVM)

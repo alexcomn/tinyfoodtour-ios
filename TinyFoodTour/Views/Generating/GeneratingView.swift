@@ -28,6 +28,7 @@ struct GeneratingView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .lightStatusBar()
         .navigationDestination(isPresented: $navigateToResults) {
             if let tour = vm.tour {
                 ResultsView(tour: tour, isShared: false, generationParams: answers)

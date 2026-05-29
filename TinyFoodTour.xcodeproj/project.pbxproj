@@ -7,56 +7,60 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		DB9A03C497174D8488C4FA75 /* TinyFoodTourApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73BA5B34C93248E0BAD3B51C /* TinyFoodTourApp.swift */; };
-		8F0293677B194A42A374D1C4 /* Tour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51077039DF0246B2A5457AF4 /* Tour.swift */; };
-		77948E150D944EAB8137093B /* QuizStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B817EE2A992466593C9CCD1 /* QuizStep.swift */; };
-		EA415E3412764310A53A623A /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 436B85ACB8F84F7BA918ED42 /* SupabaseService.swift */; };
-		E45C2CE535FC4D41ACB86453 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3B89F1297D64F2FAE4D106E /* LocationService.swift */; };
-		FBA013C7A5364D86B5133CF0 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DE6B3DF10884CF99FBA350E /* AuthViewModel.swift */; };
-		0F89DF0BF41F494F8AEBE375 /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4480FED95CBE4D22A800906B /* QuizViewModel.swift */; };
-		E2F4FB3F873D4A9FB7F2AA73 /* TourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401B593EDCFE4FCB85E15C9E /* TourViewModel.swift */; };
-		8E8DABE6BF3A492BB39FC361 /* LiveTourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADB9C47A6DC456F8BD8EA63 /* LiveTourViewModel.swift */; };
-		74C63EB0DD1B4DC8912D156C /* BrandMarkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFEA59F4E053422F984B4B16 /* BrandMarkView.swift */; };
-		53AAF37D73F04967A10E87A7 /* StopLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2CE6A41AFE4F85BF9CEC17 /* StopLabel.swift */; };
-		784EC9A40FF34B02ABAC22A1 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1A7DD89EC814885BE867C9A /* HomeView.swift */; };
-		08110FF8530146ACB02FD13A /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C852C8D07A35476A8D81910C /* QuizView.swift */; };
-		4C79BC60898C436AA3A0AB09 /* NeighborhoodStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD9994F3AA84F788EEE0E27 /* NeighborhoodStepView.swift */; };
-		007BC7CB6F1840EC85B2B893 /* GeneratingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BA63884C52420D98A60CD1 /* GeneratingView.swift */; };
-		09649B73C37C4F798865D57C /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15FB0F01A2BC444A8E6222CD /* ResultsView.swift */; };
-		8ACEADEF591A4DDE9F0D2F43 /* LiveTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0256CAF789874AC8854E1032 /* LiveTourView.swift */; };
-		367FD37FC72047D79BB803B6 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 625BF10036D347FBAB5AE62B /* AuthView.swift */; };
-		86210B1278BF43CF88A56070 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D747B22B39D44E1690F1059D /* Assets.xcassets */; };
-		AB3D1CA0CD19416B98D84BDE /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4ABA070BA87D4966B715BC3D /* Preview Assets.xcassets */; };
+		7C25596C254241BB885891B7 /* TinyFoodTourApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABFEA9FEDF9F49BF9955F45E /* TinyFoodTourApp.swift */; };
+		7E92DE19B9B9402DA5F033B7 /* Tour.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF067B800D054705B5A7EF1F /* Tour.swift */; };
+		1A4FDE8052D54BECB1EB57B8 /* QuizStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE53C48B8AA4A069667E48D /* QuizStep.swift */; };
+		5D1E3997CADC42268592A7B6 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBB4E621D942D4B9648E83 /* SupabaseService.swift */; };
+		24B234524EDA4868AD377D46 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D1A5AA4680B45ABB4D052BC /* LocationService.swift */; };
+		69CBBE77A3174CE8983C66F9 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582C486CA6D1414F97BE06B8 /* AuthViewModel.swift */; };
+		F496E7622A654021B2AC8D40 /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9CA842D05C74BDBB044A413 /* QuizViewModel.swift */; };
+		653DBF248F324308A5E4E943 /* TourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89A3A9A44484496EA802AA1D /* TourViewModel.swift */; };
+		C33CA6228002468998D85EFF /* LiveTourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6480A2E449724F8B984E2406 /* LiveTourViewModel.swift */; };
+		308382EDEB384D7392E8ACD2 /* BrandMarkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3F97A88A7C84C42B2F9513C /* BrandMarkView.swift */; };
+		85708F975F34414F8AB599F4 /* StopLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1381D08A84CC473AA687201F /* StopLabel.swift */; };
+		6E49009AFA024D2F902196C2 /* StatusBarModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C40E1FA9774941929ED3C1 /* StatusBarModifier.swift */; };
+		78868B56D834464A8BCE814E /* SafeArea.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078130BC805B4F46B29FF6C7 /* SafeArea.swift */; };
+		A8B2064EBE934E5AA37CFA91 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8BA1CD461574084968A345F /* HomeView.swift */; };
+		9F6FDE81EA7C4188B15B58C4 /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46558188F389447FB8ECB282 /* QuizView.swift */; };
+		B890EA1CC6F542D48D5756C3 /* NeighborhoodStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1660894A0D44F65B3D6A1B7 /* NeighborhoodStepView.swift */; };
+		604E7E70F5034F57B613BFE4 /* GeneratingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20565F93B924810A292B129 /* GeneratingView.swift */; };
+		EF4BBCB2763C49A48C2DC535 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDD432B0C39E4366B8BF8185 /* ResultsView.swift */; };
+		97736F8B4E714E5F8FEE78E4 /* LiveTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE0A2DBE7A247D5BE8FBD3B /* LiveTourView.swift */; };
+		5EC0947244B34E03AB1E015C /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D60673BCCA84298A7FEB8D8 /* AuthView.swift */; };
+		FBBF2776AFEC47689F94F694 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7F1D2CFE52394E738B0313A2 /* Assets.xcassets */; };
+		188CD98DAFBD4EE6AF3F517B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89FE297FB277430B9B74ABEA /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		73BA5B34C93248E0BAD3B51C /* TinyFoodTourApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyFoodTourApp.swift; sourceTree = "<group>"; };
-		51077039DF0246B2A5457AF4 /* Tour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tour.swift; sourceTree = "<group>"; };
-		8B817EE2A992466593C9CCD1 /* QuizStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizStep.swift; sourceTree = "<group>"; };
-		436B85ACB8F84F7BA918ED42 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
-		D3B89F1297D64F2FAE4D106E /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
-		1DE6B3DF10884CF99FBA350E /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
-		4480FED95CBE4D22A800906B /* QuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizViewModel.swift; sourceTree = "<group>"; };
-		401B593EDCFE4FCB85E15C9E /* TourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TourViewModel.swift; sourceTree = "<group>"; };
-		5ADB9C47A6DC456F8BD8EA63 /* LiveTourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourViewModel.swift; sourceTree = "<group>"; };
-		BFEA59F4E053422F984B4B16 /* BrandMarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMarkView.swift; sourceTree = "<group>"; };
-		AF2CE6A41AFE4F85BF9CEC17 /* StopLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopLabel.swift; sourceTree = "<group>"; };
-		F1A7DD89EC814885BE867C9A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		C852C8D07A35476A8D81910C /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
-		6BD9994F3AA84F788EEE0E27 /* NeighborhoodStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeighborhoodStepView.swift; sourceTree = "<group>"; };
-		01BA63884C52420D98A60CD1 /* GeneratingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratingView.swift; sourceTree = "<group>"; };
-		15FB0F01A2BC444A8E6222CD /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
-		0256CAF789874AC8854E1032 /* LiveTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourView.swift; sourceTree = "<group>"; };
-		625BF10036D347FBAB5AE62B /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
-		BE60569D0C3E475F8A015BEA /* TinyFoodTour.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyFoodTour.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D747B22B39D44E1690F1059D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		D63E659A02DA4CFC8AA4128C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4ABA070BA87D4966B715BC3D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		5EF52F944B8D47E28CE56A66 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		ABFEA9FEDF9F49BF9955F45E /* TinyFoodTourApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyFoodTourApp.swift; sourceTree = "<group>"; };
+		CF067B800D054705B5A7EF1F /* Tour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tour.swift; sourceTree = "<group>"; };
+		5FE53C48B8AA4A069667E48D /* QuizStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizStep.swift; sourceTree = "<group>"; };
+		5FDBB4E621D942D4B9648E83 /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		9D1A5AA4680B45ABB4D052BC /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		582C486CA6D1414F97BE06B8 /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		E9CA842D05C74BDBB044A413 /* QuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizViewModel.swift; sourceTree = "<group>"; };
+		89A3A9A44484496EA802AA1D /* TourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TourViewModel.swift; sourceTree = "<group>"; };
+		6480A2E449724F8B984E2406 /* LiveTourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourViewModel.swift; sourceTree = "<group>"; };
+		D3F97A88A7C84C42B2F9513C /* BrandMarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMarkView.swift; sourceTree = "<group>"; };
+		1381D08A84CC473AA687201F /* StopLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopLabel.swift; sourceTree = "<group>"; };
+		16C40E1FA9774941929ED3C1 /* StatusBarModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarModifier.swift; sourceTree = "<group>"; };
+		078130BC805B4F46B29FF6C7 /* SafeArea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeArea.swift; sourceTree = "<group>"; };
+		B8BA1CD461574084968A345F /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		46558188F389447FB8ECB282 /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
+		C1660894A0D44F65B3D6A1B7 /* NeighborhoodStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeighborhoodStepView.swift; sourceTree = "<group>"; };
+		F20565F93B924810A292B129 /* GeneratingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratingView.swift; sourceTree = "<group>"; };
+		DDD432B0C39E4366B8BF8185 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		2CE0A2DBE7A247D5BE8FBD3B /* LiveTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourView.swift; sourceTree = "<group>"; };
+		7D60673BCCA84298A7FEB8D8 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		E70424D536D840DEA32BB310 /* TinyFoodTour.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyFoodTour.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7F1D2CFE52394E738B0313A2 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8F53B2C208A7427DB47BC250 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		89FE297FB277430B9B74ABEA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		F47832E86EA24003B2958967 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		8F28E05E2E0D4BDE857C1CDA /* Frameworks */ = {
+		7C4262C814194DE88E29CF6F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -66,151 +70,153 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		4658F657974842FEBA6B6177 = {
+		C733116489054653B6077997 = {
 			isa = PBXGroup;
 			children = (
-				E52532035838481DB0BC2C20 /* TinyFoodTour */,
-				8D7C21470734412B91DF914E /* Products */,
+				0CA1224A172A40CEAA6B548B /* TinyFoodTour */,
+				9423404FAA894A4594843F10 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		8D7C21470734412B91DF914E = {
+		9423404FAA894A4594843F10 = {
 			isa = PBXGroup;
 			children = (
-				BE60569D0C3E475F8A015BEA /* TinyFoodTour.app */,
+				E70424D536D840DEA32BB310 /* TinyFoodTour.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		E52532035838481DB0BC2C20 = {
+		0CA1224A172A40CEAA6B548B = {
 			isa = PBXGroup;
 			children = (
-				73BA5B34C93248E0BAD3B51C /* TinyFoodTourApp.swift */,
-				9449342137FB45F8B0A88803 /* Models */,
-				C8F30C015F0845D78E7275A0 /* Services */,
-				93895918A850489E97EB2AEB /* ViewModels */,
-				EF047EE70A07459CB0EECA26 /* Views */,
-				D747B22B39D44E1690F1059D /* Assets.xcassets */,
-				D63E659A02DA4CFC8AA4128C /* Info.plist */,
-				307F7959B0B44D7F9B409B29 /* Preview Content */,
-				E2D26677B75341B3945D3BD9 /* Launch */,
+				ABFEA9FEDF9F49BF9955F45E /* TinyFoodTourApp.swift */,
+				A5BDAE726A2042ECA95D455F /* Models */,
+				3BAEEA5A92304BABA1EB9328 /* Services */,
+				EFB11E7358E54B92AD9539A1 /* ViewModels */,
+				9A118F7A6E634AF894D0928C /* Views */,
+				7F1D2CFE52394E738B0313A2 /* Assets.xcassets */,
+				8F53B2C208A7427DB47BC250 /* Info.plist */,
+				64FE2F1ECF5E4E8D80BDA80E /* Preview Content */,
+				EFC9342B31F3425FA2788D42 /* Launch */,
 			);
 			path = TinyFoodTour;
 			sourceTree = "<group>";
 		};
-		E2D26677B75341B3945D3BD9 = {
+		EFC9342B31F3425FA2788D42 = {
 			isa = PBXGroup;
 			children = (
-				5EF52F944B8D47E28CE56A66 /* LaunchScreen.storyboard */,
+				F47832E86EA24003B2958967 /* LaunchScreen.storyboard */,
 			);
 			path = Launch;
 			sourceTree = "<group>";
 		};
-		307F7959B0B44D7F9B409B29 = {
+		64FE2F1ECF5E4E8D80BDA80E = {
 			isa = PBXGroup;
 			children = (
-				4ABA070BA87D4966B715BC3D /* Preview Assets.xcassets */,
+				89FE297FB277430B9B74ABEA /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		9449342137FB45F8B0A88803 = {
+		A5BDAE726A2042ECA95D455F = {
 			isa = PBXGroup;
 			children = (
-				51077039DF0246B2A5457AF4 /* Tour.swift */,
-				8B817EE2A992466593C9CCD1 /* QuizStep.swift */,
+				CF067B800D054705B5A7EF1F /* Tour.swift */,
+				5FE53C48B8AA4A069667E48D /* QuizStep.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		C8F30C015F0845D78E7275A0 = {
+		3BAEEA5A92304BABA1EB9328 = {
 			isa = PBXGroup;
 			children = (
-				436B85ACB8F84F7BA918ED42 /* SupabaseService.swift */,
-				D3B89F1297D64F2FAE4D106E /* LocationService.swift */,
+				5FDBB4E621D942D4B9648E83 /* SupabaseService.swift */,
+				9D1A5AA4680B45ABB4D052BC /* LocationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		93895918A850489E97EB2AEB = {
+		EFB11E7358E54B92AD9539A1 = {
 			isa = PBXGroup;
 			children = (
-				1DE6B3DF10884CF99FBA350E /* AuthViewModel.swift */,
-				4480FED95CBE4D22A800906B /* QuizViewModel.swift */,
-				401B593EDCFE4FCB85E15C9E /* TourViewModel.swift */,
-				5ADB9C47A6DC456F8BD8EA63 /* LiveTourViewModel.swift */,
+				582C486CA6D1414F97BE06B8 /* AuthViewModel.swift */,
+				E9CA842D05C74BDBB044A413 /* QuizViewModel.swift */,
+				89A3A9A44484496EA802AA1D /* TourViewModel.swift */,
+				6480A2E449724F8B984E2406 /* LiveTourViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		EF047EE70A07459CB0EECA26 = {
+		9A118F7A6E634AF894D0928C = {
 			isa = PBXGroup;
 			children = (
-				6175CBA9D0504D86B67234F0 /* Shared */,
-				F99FF62525CE4C7EB63B15E9 /* Home */,
-				3BC4C7DFF1FB4FE9825F7407 /* Quiz */,
-				145103F6BE994C4FBC8245D5 /* Generating */,
-				A7D681B624A446ACA2523BA4 /* Results */,
-				0C539DBB42894CE59205CFB2 /* LiveTour */,
-				49D5BB28499840ED91D409BB /* Auth */,
+				F2A8186588F04540B71BC452 /* Shared */,
+				DC5A7A2EB97643EAA0390A1A /* Home */,
+				E5EF5234F4584360AC0DE61E /* Quiz */,
+				D6BCC2717FCE4FFEB09B1EAD /* Generating */,
+				5EA4CC65220F4655931572E8 /* Results */,
+				763938EC800F4664BDE71765 /* LiveTour */,
+				685B6B1896EE4DA5B48919CC /* Auth */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		6175CBA9D0504D86B67234F0 = {
+		F2A8186588F04540B71BC452 = {
 			isa = PBXGroup;
 			children = (
-				BFEA59F4E053422F984B4B16 /* BrandMarkView.swift */,
-				AF2CE6A41AFE4F85BF9CEC17 /* StopLabel.swift */,
+				D3F97A88A7C84C42B2F9513C /* BrandMarkView.swift */,
+				1381D08A84CC473AA687201F /* StopLabel.swift */,
+				16C40E1FA9774941929ED3C1 /* StatusBarModifier.swift */,
+				078130BC805B4F46B29FF6C7 /* SafeArea.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
 		};
-		F99FF62525CE4C7EB63B15E9 = {
+		DC5A7A2EB97643EAA0390A1A = {
 			isa = PBXGroup;
 			children = (
-				F1A7DD89EC814885BE867C9A /* HomeView.swift */,
+				B8BA1CD461574084968A345F /* HomeView.swift */,
 			);
 			path = Home;
 			sourceTree = "<group>";
 		};
-		3BC4C7DFF1FB4FE9825F7407 = {
+		E5EF5234F4584360AC0DE61E = {
 			isa = PBXGroup;
 			children = (
-				C852C8D07A35476A8D81910C /* QuizView.swift */,
-				6BD9994F3AA84F788EEE0E27 /* NeighborhoodStepView.swift */,
+				46558188F389447FB8ECB282 /* QuizView.swift */,
+				C1660894A0D44F65B3D6A1B7 /* NeighborhoodStepView.swift */,
 			);
 			path = Quiz;
 			sourceTree = "<group>";
 		};
-		145103F6BE994C4FBC8245D5 = {
+		D6BCC2717FCE4FFEB09B1EAD = {
 			isa = PBXGroup;
 			children = (
-				01BA63884C52420D98A60CD1 /* GeneratingView.swift */,
+				F20565F93B924810A292B129 /* GeneratingView.swift */,
 			);
 			path = Generating;
 			sourceTree = "<group>";
 		};
-		A7D681B624A446ACA2523BA4 = {
+		5EA4CC65220F4655931572E8 = {
 			isa = PBXGroup;
 			children = (
-				15FB0F01A2BC444A8E6222CD /* ResultsView.swift */,
+				DDD432B0C39E4366B8BF8185 /* ResultsView.swift */,
 			);
 			path = Results;
 			sourceTree = "<group>";
 		};
-		0C539DBB42894CE59205CFB2 = {
+		763938EC800F4664BDE71765 = {
 			isa = PBXGroup;
 			children = (
-				0256CAF789874AC8854E1032 /* LiveTourView.swift */,
+				2CE0A2DBE7A247D5BE8FBD3B /* LiveTourView.swift */,
 			);
 			path = LiveTour;
 			sourceTree = "<group>";
 		};
-		49D5BB28499840ED91D409BB = {
+		685B6B1896EE4DA5B48919CC = {
 			isa = PBXGroup;
 			children = (
-				625BF10036D347FBAB5AE62B /* AuthView.swift */,
+				7D60673BCCA84298A7FEB8D8 /* AuthView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -218,13 +224,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		4997108F4C4649F0A1434D8E /* TinyFoodTour */ = {
+		1B9130B6CD3B46DC91F750EE /* TinyFoodTour */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1E8992B387FA4A04BE0BC08A;
+			buildConfigurationList = E7CF1CA347704F92ABDA07F1;
 			buildPhases = (
-				FFE8EFE49D3D4716826E92F2 /* Sources */,
-				8F28E05E2E0D4BDE857C1CDA /* Frameworks */,
-				93A4064623294992B11AC9A4 /* Resources */,
+				03ADB24746A7479C8D6F1BFF /* Sources */,
+				7C4262C814194DE88E29CF6F /* Frameworks */,
+				04A0CF81EAF44F9DADD5CCA7 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -232,25 +238,25 @@
 			);
 			name = TinyFoodTour;
 			productName = TinyFoodTour;
-			productReference = BE60569D0C3E475F8A015BEA /* TinyFoodTour.app */;
+			productReference = E70424D536D840DEA32BB310 /* TinyFoodTour.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		C3F0366D8A2545A9AA394649 /* Project object */ = {
+		89405C445CAB476883776E86 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
-					4997108F4C4649F0A1434D8E = {
+					1B9130B6CD3B46DC91F750EE = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
-			buildConfigurationList = B5D5A11D1ED94FB8A18D52E3;
+			buildConfigurationList = A7787A4D4C5048D49E7C164D;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -258,58 +264,60 @@
 				en,
 				Base,
 			);
-			mainGroup = 4658F657974842FEBA6B6177;
-			productRefGroup = 8D7C21470734412B91DF914E /* Products */;
+			mainGroup = C733116489054653B6077997;
+			productRefGroup = 9423404FAA894A4594843F10 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				4997108F4C4649F0A1434D8E /* TinyFoodTour */,
+				1B9130B6CD3B46DC91F750EE /* TinyFoodTour */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		93A4064623294992B11AC9A4 /* Resources */ = {
+		04A0CF81EAF44F9DADD5CCA7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				86210B1278BF43CF88A56070 /* Assets.xcassets in Resources */,
-				AB3D1CA0CD19416B98D84BDE /* Preview Assets.xcassets in Resources */,
+				FBBF2776AFEC47689F94F694 /* Assets.xcassets in Resources */,
+				188CD98DAFBD4EE6AF3F517B /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		FFE8EFE49D3D4716826E92F2 /* Sources */ = {
+		03ADB24746A7479C8D6F1BFF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DB9A03C497174D8488C4FA75 /* TinyFoodTourApp.swift in Sources */,
-				8F0293677B194A42A374D1C4 /* Tour.swift in Sources */,
-				77948E150D944EAB8137093B /* QuizStep.swift in Sources */,
-				EA415E3412764310A53A623A /* SupabaseService.swift in Sources */,
-				E45C2CE535FC4D41ACB86453 /* LocationService.swift in Sources */,
-				FBA013C7A5364D86B5133CF0 /* AuthViewModel.swift in Sources */,
-				0F89DF0BF41F494F8AEBE375 /* QuizViewModel.swift in Sources */,
-				E2F4FB3F873D4A9FB7F2AA73 /* TourViewModel.swift in Sources */,
-				8E8DABE6BF3A492BB39FC361 /* LiveTourViewModel.swift in Sources */,
-				74C63EB0DD1B4DC8912D156C /* BrandMarkView.swift in Sources */,
-				53AAF37D73F04967A10E87A7 /* StopLabel.swift in Sources */,
-				784EC9A40FF34B02ABAC22A1 /* HomeView.swift in Sources */,
-				08110FF8530146ACB02FD13A /* QuizView.swift in Sources */,
-				4C79BC60898C436AA3A0AB09 /* NeighborhoodStepView.swift in Sources */,
-				007BC7CB6F1840EC85B2B893 /* GeneratingView.swift in Sources */,
-				09649B73C37C4F798865D57C /* ResultsView.swift in Sources */,
-				8ACEADEF591A4DDE9F0D2F43 /* LiveTourView.swift in Sources */,
-				367FD37FC72047D79BB803B6 /* AuthView.swift in Sources */,
+				7C25596C254241BB885891B7 /* TinyFoodTourApp.swift in Sources */,
+				7E92DE19B9B9402DA5F033B7 /* Tour.swift in Sources */,
+				1A4FDE8052D54BECB1EB57B8 /* QuizStep.swift in Sources */,
+				5D1E3997CADC42268592A7B6 /* SupabaseService.swift in Sources */,
+				24B234524EDA4868AD377D46 /* LocationService.swift in Sources */,
+				69CBBE77A3174CE8983C66F9 /* AuthViewModel.swift in Sources */,
+				F496E7622A654021B2AC8D40 /* QuizViewModel.swift in Sources */,
+				653DBF248F324308A5E4E943 /* TourViewModel.swift in Sources */,
+				C33CA6228002468998D85EFF /* LiveTourViewModel.swift in Sources */,
+				308382EDEB384D7392E8ACD2 /* BrandMarkView.swift in Sources */,
+				85708F975F34414F8AB599F4 /* StopLabel.swift in Sources */,
+				6E49009AFA024D2F902196C2 /* StatusBarModifier.swift in Sources */,
+				78868B56D834464A8BCE814E /* SafeArea.swift in Sources */,
+				A8B2064EBE934E5AA37CFA91 /* HomeView.swift in Sources */,
+				9F6FDE81EA7C4188B15B58C4 /* QuizView.swift in Sources */,
+				B890EA1CC6F542D48D5756C3 /* NeighborhoodStepView.swift in Sources */,
+				604E7E70F5034F57B613BFE4 /* GeneratingView.swift in Sources */,
+				EF4BBCB2763C49A48C2DC535 /* ResultsView.swift in Sources */,
+				97736F8B4E714E5F8FEE78E4 /* LiveTourView.swift in Sources */,
+				5EC0947244B34E03AB1E015C /* AuthView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		9AD1B249AA774992BC132C63 /* Debug */ = {
+		C76C4F0F27984359A19EDC89 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -335,7 +343,7 @@
 			};
 			name = Debug;
 		};
-		D20E0164BFAA4D479E82A393 /* Release */ = {
+		963B7F48C68D4E138AA3F001 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -353,7 +361,7 @@
 			};
 			name = Release;
 		};
-		5FAF73594D404E56AD0F59DA /* Debug */ = {
+		A3D20B9858734F2FB8CB3BD5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -374,7 +382,7 @@
 			};
 			name = Debug;
 		};
-		61785FFBBE424B92B5E33D03 /* Release */ = {
+		E74A62FE63DE4BE98E252C2E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -398,20 +406,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B5D5A11D1ED94FB8A18D52E3 /* Build configuration list for PBXProject "TinyFoodTour" */ = {
+		A7787A4D4C5048D49E7C164D /* Build configuration list for PBXProject "TinyFoodTour" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9AD1B249AA774992BC132C63 /* Debug */,
-				D20E0164BFAA4D479E82A393 /* Release */,
+				C76C4F0F27984359A19EDC89 /* Debug */,
+				963B7F48C68D4E138AA3F001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1E8992B387FA4A04BE0BC08A /* Build configuration list for PBXNativeTarget "TinyFoodTour" */ = {
+		E7CF1CA347704F92ABDA07F1 /* Build configuration list for PBXNativeTarget "TinyFoodTour" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5FAF73594D404E56AD0F59DA /* Debug */,
-				61785FFBBE424B92B5E33D03 /* Release */,
+				A3D20B9858734F2FB8CB3BD5 /* Debug */,
+				E74A62FE63DE4BE98E252C2E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -419,5 +427,5 @@
 /* End XCConfigurationList section */
 
 	};
-	rootObject = C3F0366D8A2545A9AA394649 /* Project object */;
+	rootObject = 89405C445CAB476883776E86 /* Project object */;
 }

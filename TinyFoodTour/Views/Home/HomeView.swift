@@ -90,6 +90,7 @@ struct HomeView: View {
                     .environmentObject(authVM)
             }
         }
+        .darkStatusBar()
         .task {
             await savedToursVM.load()
         }

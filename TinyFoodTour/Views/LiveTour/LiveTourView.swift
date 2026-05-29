@@ -20,6 +20,7 @@ struct LiveTourView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
+        .darkStatusBar()
         .sheet(isPresented: $vm.showCompletionCard) {
             CompletionCardView(tour: vm.tour!)
         }
@@ -130,8 +131,9 @@ struct LiveTourView: View {
         .background(
             Color(.systemBackground)
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
+                .ignoresSafeArea(edges: .bottom)
         )
-        .padding(.bottom, 20)
+        .padding(.bottom, max(20, UIApplication.safeAreaBottom))
     }
 }
 
