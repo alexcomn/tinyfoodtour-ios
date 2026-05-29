@@ -72,8 +72,8 @@ struct QuizView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(vm.currentTitle)
-                        .font(.system(size: 24, weight: .bold, design: .serif))
-                        .foregroundColor(.primary)
+                        .font(.system(size: 26, weight: .bold, design: .serif))
+                        .foregroundColor(Color("TFTSlate"))
                         .padding(.horizontal, 20)
                         .padding(.top, 4)
 
@@ -81,7 +81,7 @@ struct QuizView: View {
                         Text(vm.currentHint)
                             .font(.system(size: 13))
                             .italic()
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color("SlateMid"))
                             .padding(.horizontal, 20)
                             .padding(.bottom, 4)
                     }

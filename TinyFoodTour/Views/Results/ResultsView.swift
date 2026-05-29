@@ -1,82 +1,32 @@
 import SwiftUI
 import MapKit
 
+// MARK: - Results screen
+// Design mirrors Results.tsx: pizza-crust header, white stop cards, circular color
+// badge, serif headings, photo strips, today's hours, link buttons.
+
 struct ResultsView: View {
     let tour: Tour
     let isShared: Bool
     let generationParams: QuizAnswers?
 
     @EnvironmentObject var authVM: AuthViewModel
-    @StateObject private var savedToursVM = SavedToursViewModel()
+    @StateObject private var savedVM = SavedToursViewModel()
     @State private var navigateToLive = false
     @State private var isSaved = false
-    @State private var showMap = false
 
-    private var stopCount: Int { tour.stops.count }
+    private var stops: [TourStop] { tour.stops }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                // Header
-                VStack(alignment: .leading, spacing: 8) {
-                    BrandMarkView()
-                        .padding(.bottom, 4)
-
-                    Text(tour.displayTitle)
-                        .font(.system(size: 28, weight: .bold, design: .serif))
-                        .foregroundColor(.primary)
-
-                    HStack(spacing: 8) {
-                        ForEach(tour.vibe.prefix(2), id: \.self) { tag in
-                            TagChip(text: tag)
-                        }
-                        TagChip(text: "\(stopCount) stops")
-                        if let miles = tour.totalDistanceMiles {
-                            TagChip(text: String(format: "%.1f mi", miles))
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 20)
-
-                // Map thumbnail
-                TourMapView(stops: tour.stops)
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 24)
-
-                // Stops
-                ForEach(Array(tour.stops.enumerated()), id: \.element.place_id) { index, stop in
-                    StopCard(stop: stop, index: index, total: stopCount)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
-                }
-
-                // Action buttons
-                VStack(spacing: 12) {
-                    if !isShared {
-                        CTAButton(title: "Walk the tour →", isEnabled: true) {
-                            navigateToLive = true
-                        }
-                        .frame(maxWidth: .infinity)
-
-                        Button {
-                            savedToursVM.saveTour(token: tour.share_token)
-                            isSaved = true
-                        } label: {
-                            Label(isSaved ? "Saved!" : "Save Tour", systemImage: isSaved ? "bookmark.fill" : "bookmark")
-                                .font(.system(size: 14))
-                                .foregroundColor(isSaved ? Color("Radish") : .secondary)
-                        }
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 24)
-                .frame(maxWidth: .infinity)
+            VStack(spacing: 0) {
+                header
+                mapSection
+                stopList
+                actionBar
             }
         }
+        .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
         .navigationDestination(isPresented: $navigateToLive) {
@@ -84,152 +34,379 @@ struct ResultsView: View {
                 .environmentObject(authVM)
         }
     }
-}
 
-struct TagChip: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(.system(size: 12))
-            .foregroundColor(.secondary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(Color(.secondarySystemBackground))
-            .clipShape(Capsule())
+    // MARK: - Header (bg-pizza-crust)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            BrandMarkView(fontSize: 15)
+                .padding(.bottom, 12)
+
+            Text(tour.displayTitle)
+                .font(.system(size: 30, weight: .bold, design: .serif))
+                .foregroundColor(Color("Radish"))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 6)
+
+            HStack(spacing: 6) {
+                ForEach(tour.vibe.prefix(2), id: \.self) { tag in
+                    MetaChip(text: tag)
+                }
+                MetaChip(text: "\(stops.count) stops")
+                if let miles = tour.totalDistanceMiles {
+                    MetaChip(text: String(format: "%.1f mi", miles))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 20)
+        .background(Color("PizzaCrust"))
+    }
+
+    // MARK: - Map
+    private var mapSection: some View {
+        TourMapView(stops: stops)
+            .frame(height: 180)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(Color("PizzaCrust"))
+    }
+
+    // MARK: - Stop cards
+    private var stopList: some View {
+        VStack(spacing: 12) {
+            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                StopCard(
+                    stop: stop,
+                    index: idx,
+                    total: stops.count,
+                    isFirst: idx == 0,
+                    onStartHere: { navigateToLive = true }
+                )
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - Bottom action bar
+    private var actionBar: some View {
+        VStack(spacing: 12) {
+            if !isShared {
+                Button {
+                    navigateToLive = true
+                } label: {
+                    HStack {
+                        Image(systemName: "figure.walk")
+                        Text("Walk the tour →")
+                    }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color("Radish"))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    savedVM.saveTour(token: tour.share_token)
+                    isSaved = true
+                } label: {
+                    Label(isSaved ? "Saved!" : "Save tour", systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                        .font(.system(size: 14))
+                        .foregroundColor(isSaved ? Color("Radish") : Color("SlateMid"))
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
     }
 }
 
+// MARK: - Stop card
 struct StopCard: View {
     let stop: TourStop
     let index: Int
     let total: Int
+    let isFirst: Bool
+    let onStartHere: () -> Void
 
-    var stopColor: Color { StopLabel.color(index: index) }
-    var label: String { StopLabel.label(index: index, total: total) }
+    private var stopColor: Color { StopLabel.color(index: index) }
+    private var stopLabel: String { StopLabel.label(index: index, total: total) }
+
+    // cuisine_label preferred; fall back to cleaned cuisine_type
+    private var cuisineDisplay: String {
+        if let label = stop.cuisine_label, !label.isEmpty { return label }
+        if let type_ = stop.cuisine_type, !type_.isEmpty {
+            return type_.replacingOccurrences(of: "_", with: " ")
+                .capitalized
+        }
+        return "Restaurant"
+    }
+
+    private var priceDisplay: String {
+        guard let p = stop.price_level, p > 0 else { return "" }
+        return String(repeating: "$", count: p)
+    }
+
+    // Today's hours extracted from opening_hours array
+    private var todaysHours: String? {
+        guard let hours = stop.opening_hours, !hours.isEmpty else { return nil }
+        let days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+        let today = days[Calendar.current.component(.weekday, from: Date()) - 1]
+        guard let line = hours.first(where: { $0.hasPrefix(today) }) else { return nil }
+        return line.replacingOccurrences(of: "\(today): ", with: "")
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
+        VStack(alignment: .leading, spacing: 0) {
+            // ── Row 1: badge · label+name · walk/start ──────────────────────
+            HStack(alignment: .top, spacing: 12) {
+                // Numbered circle badge
+                ZStack {
+                    Circle().fill(stopColor)
+                    Text(String(format: "%02d", index + 1))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 30, height: 30)
+                .flexibleShrink()
+
+                // Label + name
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(label)
-                        .font(.system(size: 10, weight: .bold))
+                    Text(stopLabel)
+                        .font(.system(size: 10, weight: .medium))
+                        .kerning(1.5)
                         .foregroundColor(stopColor)
-                        .kerning(1.2)
 
                     Text(stop.name)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .foregroundColor(Color("TFTSlate"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Text([stop.cuisine_type, stop.price_level.map { String(repeating: "$", count: max(1, $0)) }]
-                        .compactMap { $0 }.joined(separator: " · "))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
+                // Walk time or "Start here" pill
+                if isFirst {
+                    Button(action: onStartHere) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "mappin")
+                                .font(.system(size: 9))
+                            Text("Start here")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundColor(Color("Radish"))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color("Radish").opacity(0.35), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                } else if let walk = stop.walk_time_from_previous, walk != "Starting point", !walk.isEmpty {
+                    Text(walk)
+                        .font(.system(size: 11))
+                        .foregroundColor(Color("SlateMid"))
+                        .fixedSize()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+
+            // ── Row 2: cuisine · price · hours ──────────────────────────────
+            HStack(spacing: 0) {
+                Text(cuisineDisplay)
+                    .foregroundColor(Color("SlateMid"))
+                if !priceDisplay.isEmpty {
+                    Text(" · ")
+                        .foregroundColor(Color("SlateMid"))
+                    Text(priceDisplay)
+                        .foregroundColor(Color("TFTSlate").opacity(0.7))
+                        .fontWeight(.medium)
                 }
                 Spacer()
-                if let walkTime = stop.walk_time_from_previous, walkTime != "Starting point" {
+                if let hours = todaysHours {
                     HStack(spacing: 3) {
-                        Image(systemName: "figure.walk")
-                            .font(.system(size: 11))
-                        Text(walkTime)
-                            .font(.system(size: 11))
-                    }
-                    .foregroundColor(.secondary)
-                    .padding(.top, 2)
-                }
-            }
-
-            if let desc = stop.description {
-                Text(desc)
-                    .font(.system(size: 14))
-                    .foregroundColor(.primary.opacity(0.8))
-                    .lineSpacing(3)
-            }
-
-            if let addr = stop.address {
-                Text(addr)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-
-            HStack(spacing: 12) {
-                if let websiteUrl = stop.website_url, !websiteUrl.isEmpty, let url = URL(string: websiteUrl) {
-                    Link(destination: url) {
-                        Label("Website", systemImage: "safari")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("Radish"))
-                    }
-                }
-                if let mapsUrl = stop.google_maps_url ?? googleMapsURL(for: stop),
-                   let url = URL(string: mapsUrl) {
-                    Link(destination: url) {
-                        Label("Directions", systemImage: "map")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("Radish"))
+                        Image(systemName: "clock")
+                            .font(.system(size: 9))
+                        Text(hours)
+                            .foregroundColor(hours == "Closed" ? Color.red : Color("SlateMid").opacity(0.8))
+                            .fontWeight(hours == "Closed" ? .semibold : .regular)
                     }
                 }
             }
+            .font(.system(size: 12))
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+
+            // ── Photo strip ──────────────────────────────────────────────────
+            if let photos = stop.photos, !photos.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(photos.prefix(4), id: \.self) { url in
+                            AsyncImage(url: URL(string: url)) { phase in
+                                switch phase {
+                                case .success(let img):
+                                    img.resizable().scaledToFill()
+                                case .failure:
+                                    Color("CreamDark")
+                                default:
+                                    Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
+                                }
+                            }
+                            .frame(width: 100, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+                .padding(.top, 10)
+            }
+
+            // ── Divider + description + link button ──────────────────────────
+            Divider()
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+
+            HStack(alignment: .bottom, spacing: 12) {
+                if let desc = stop.description, !desc.isEmpty {
+                    Text(desc)
+                        .font(.system(size: 12))
+                        .foregroundColor(Color("SlateMid"))
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                linkButton(for: stop)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 16)
         }
-        .padding(16)
-        .background(Color(.secondarySystemBackground))
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(stopColor.opacity(0.3), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         )
     }
 
-    private func googleMapsURL(for stop: TourStop) -> String? {
-        let q = (stop.name + " " + (stop.address ?? ""))
-            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return "https://maps.google.com/?q=\(q)"
+    @ViewBuilder
+    private func linkButton(for stop: TourStop) -> some View {
+        let menuURL: URL? = {
+            if let m = stop.menu_url, !m.isEmpty { return URL(string: m) }
+            if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return URL(string: w) }
+            return nil
+        }()
+        let mapsURL: URL? = stop.google_maps_url.flatMap(URL.init)
+            ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+
+        if let url = menuURL {
+            Link(destination: url) {
+                Text("View menu →")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color("TFTSlate"))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+                    )
+            }
+            .fixedSize()
+        } else if let url = mapsURL {
+            Link(destination: url) {
+                Text("Directions →")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color("TFTSlate"))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+                    )
+            }
+            .fixedSize()
+        }
     }
+}
+
+// MARK: - Small helpers
+struct MetaChip: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 11))
+            .foregroundColor(Color("SlateMid"))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color("CreamDark").opacity(0.6))
+            .clipShape(Capsule())
+    }
+}
+
+extension View {
+    func flexibleShrink() -> some View { self }
 }
 
 // MARK: - Map
 struct TourMapView: View {
     let stops: [TourStop]
 
-    @State private var region: MKCoordinateRegion
+    @State private var position: MapCameraPosition
 
     init(stops: [TourStop]) {
         self.stops = stops
-        let locatedStops = stops.filter { $0.lat != nil && $0.lng != nil }
+        let located = stops.filter { $0.lat != nil && $0.lng != nil }
         let center: CLLocationCoordinate2D
-        if locatedStops.isEmpty {
+        if located.isEmpty {
             center = CLLocationCoordinate2D(latitude: 47.6, longitude: -122.33)
         } else {
             center = CLLocationCoordinate2D(
-                latitude: locatedStops.map { $0.lat! }.reduce(0, +) / Double(locatedStops.count),
-                longitude: locatedStops.map { $0.lng! }.reduce(0, +) / Double(locatedStops.count)
+                latitude: located.map { $0.lat! }.reduce(0, +) / Double(located.count),
+                longitude: located.map { $0.lng! }.reduce(0, +) / Double(located.count)
             )
         }
-        _region = State(initialValue: MKCoordinateRegion(
+        _position = State(initialValue: .region(MKCoordinateRegion(
             center: center,
-            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        ))
+            span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
+        )))
     }
 
     var body: some View {
-        let locatedStops = stops.filter { $0.lat != nil && $0.lng != nil }
-        Map(position: .constant(.region(region))) {
-            ForEach(locatedStops) { stop in
+        let located = stops.filter { $0.lat != nil && $0.lng != nil }
+        Map(position: $position) {
+            ForEach(located) { stop in
                 Annotation("", coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!)) {
-                    Circle()
-                        .fill(StopLabel.color(index: (stop.stop_number - 1), total: stops.count))
-                        .frame(width: 10, height: 10)
-                        .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                    ZStack {
+                        Circle()
+                            .fill(StopLabel.color(index: stop.stop_number - 1))
+                            .frame(width: 22, height: 22)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        Text(String(format: "%02d", stop.stop_number))
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
             }
         }
+        .mapStyle(.standard)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+        .allowsHitTesting(false)
     }
 }
 
-extension StopLabel {
-    static func color(index: Int, total: Int) -> Color {
-        color(index: index)
-    }
-}
-
+// MARK: - Preview
 #Preview {
     NavigationStack {
         ResultsView(tour: .preview, isShared: false, generationParams: nil)
@@ -245,25 +422,36 @@ extension Tour {
             walk_distance: "A short stroll (10 min)",
             stops: [
                 TourStop(stop_number: 1, stop_type: "appetizer", place_id: "1",
-                         name: "Stateside", address: "300 E Pike St", lat: 47.6142, lng: -122.3264,
-                         cuisine_type: "Vietnamese", cuisine_label: nil, price_level: 2,
-                         website_url: "", menu_url: nil, google_maps_url: nil,
-                         description: "Crispy spring rolls with fish sauce caramel.", walk_time_from_previous: "Starting point",
-                         rating: 4.5, photos: nil, opening_hours: nil),
+                         name: "Stateside", address: "300 E Pike St, Seattle, WA 98122",
+                         lat: 47.6142, lng: -122.3264, cuisine_type: "Vietnamese",
+                         cuisine_label: "Cult-Favorite Cocktail Bar",
+                         price_level: 2, website_url: "https://statesidesea.com",
+                         menu_url: nil, google_maps_url: nil,
+                         description: "Their crispy spring rolls hit different at golden hour. Grab a window seat and let the fish sauce caramel do the talking.",
+                         walk_time_from_previous: "Starting point",
+                         rating: 4.5, photos: nil, opening_hours: ["Monday: 4:00 PM – 12:00 AM", "Tuesday: 4:00 PM – 12:00 AM"]),
                 TourStop(stop_number: 2, stop_type: "main", place_id: "2",
-                         name: "Altura", address: "617 Broadway E", lat: 47.6252, lng: -122.3209,
-                         cuisine_type: "Italian", cuisine_label: nil, price_level: 4,
-                         website_url: "", menu_url: nil, google_maps_url: nil,
-                         description: "Multi-course Italian love letter to the Pacific Northwest.", walk_time_from_previous: "6 min walk",
+                         name: "Altura", address: "617 Broadway E, Seattle, WA 98102",
+                         lat: 47.6252, lng: -122.3209, cuisine_type: "Italian",
+                         cuisine_label: "Intimate Italian Tasting Menu",
+                         price_level: 4, website_url: "https://alturarestaurant.com",
+                         menu_url: nil, google_maps_url: nil,
+                         description: "Multi-course Italian that treats every plate like a love letter to the Pacific Northwest.",
+                         walk_time_from_previous: "6 min walk",
                          rating: 4.8, photos: nil, opening_hours: nil),
                 TourStop(stop_number: 3, stop_type: "dessert", place_id: "3",
-                         name: "Molly Moon's", address: "917 E Pine St", lat: 47.6155, lng: -122.3198,
-                         cuisine_type: "Ice Cream", cuisine_label: nil, price_level: 1,
-                         website_url: "", menu_url: nil, google_maps_url: nil,
-                         description: "Salted caramel is the move.", walk_time_from_previous: "4 min walk",
+                         name: "Molly Moon's", address: "917 E Pine St, Seattle, WA 98122",
+                         lat: 47.6155, lng: -122.3198, cuisine_type: "Ice Cream",
+                         cuisine_label: "Beloved Neighborhood Scoop Shop",
+                         price_level: 1, website_url: "https://mollymoonicecream.com",
+                         menu_url: nil, google_maps_url: nil,
+                         description: "Salted caramel is the move, but the seasonal scoops are where the real magic lives.",
+                         walk_time_from_previous: "4 min walk",
                          rating: 4.6, photos: nil, opening_hours: nil),
             ],
-            created_at: Date().ISO8601Format(), user_id: nil, share_token: "preview"
+            created_at: Date().ISO8601Format(), user_id: nil, share_token: "preview",
+            tourTitle: "Capitol Hill Golden Hour",
+            totalDistanceMiles: 0.4
         )
     }
 }

@@ -11,31 +11,33 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Header
-                    VStack(spacing: 16) {
+                    // Header — bg-pizza-crust with serif headline, matches web HomeHero
+                    VStack(spacing: 0) {
                         BrandMarkView(fontSize: 22)
-                            .padding(.top, 48)
+                            .padding(.top, 52)
+                            .padding(.bottom, 20)
 
                         Text("Your neighborhood,\none bite at a time.")
-                            .font(.system(size: 28, weight: .bold, design: .serif))
+                            .font(.system(size: 30, weight: .bold, design: .serif))
                             .multilineTextAlignment(.center)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 32)
+                            .foregroundColor(Color("Radish"))
+                            .padding(.horizontal, 28)
+                            .padding(.bottom, 10)
 
                         Text("Answer a few questions and we'll build\nyou a personalized food tour.")
                             .font(.system(size: 15))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color("SlateMid"))
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                            .padding(.horizontal, 28)
+                            .padding(.bottom, 28)
 
                         CTAButton(title: "Start a Tour →", isEnabled: true) {
                             showQuiz = true
                         }
-                        .padding(.top, 4)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 48)
                     }
                     .frame(maxWidth: .infinity)
-                    .background(Color(.systemBackground))
+                    .background(Color("PizzaCrust"))
 
                     Divider()
 
@@ -43,7 +45,8 @@ struct HomeView: View {
                     if !savedToursVM.savedTours.isEmpty {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Past Tours")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(.system(size: 18, weight: .semibold, design: .serif))
+                                .foregroundColor(Color("TFTSlate"))
                                 .padding(.horizontal, 20)
                                 .padding(.top, 28)
 

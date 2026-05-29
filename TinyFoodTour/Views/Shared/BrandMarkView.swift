@@ -28,14 +28,14 @@ struct PillButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(.primary)
+                .font(.system(size: 14))
+                .foregroundColor(isSelected ? Color("TFTSlate") : Color("TFTSlate"))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color("PizzaCrust") : Color(.systemBackground))
+                .background(isSelected ? Color("PizzaCrust") : Color.white)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(isSelected ? Color("Yolk") : Color.primary.opacity(0.15), lineWidth: 1)
+                        .stroke(isSelected ? Color("Radish").opacity(0.5) : Color.primary.opacity(0.12), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         }
