@@ -5,6 +5,7 @@ struct HomeView: View {
     @StateObject private var savedToursVM = SavedToursViewModel()
     @State private var showQuiz = false
     @State private var showAuth = false
+    @State private var showProfile = false
     @State private var selectedTour: Tour?
 
     var body: some View {
@@ -84,13 +85,13 @@ struct HomeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         if authVM.currentUser != nil {
-                            // show profile sheet
+                            showProfile = true
                         } else {
                             showAuth = true
                         }
                     } label: {
                         Image(systemName: authVM.currentUser != nil ? "person.circle.fill" : "person.circle")
-                            .foregroundColor(Color("Radish"))
+                            .foregroundColor(Color("Primary"))
                     }
                 }
             }
@@ -101,6 +102,10 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showAuth) {
                 AuthView()
+                    .environmentObject(authVM)
+            }
+            .sheet(isPresented: $showProfile) {
+                ProfileView()
                     .environmentObject(authVM)
             }
             .sheet(item: $selectedTour) { tour in

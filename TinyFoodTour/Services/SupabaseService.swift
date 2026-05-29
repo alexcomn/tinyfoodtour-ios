@@ -121,6 +121,16 @@ final class SupabaseService {
         try await authRequest(endpoint: "token?grant_type=password", email: email, password: password)
     }
 
+    func refreshToken(_ refreshToken: String) async throws -> AuthResponse {
+        var request = URLRequest(url: URL(string: "\(supabaseURL)/auth/v1/token?grant_type=refresh_token")!)
+        request.httpMethod = "POST"
+        baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        request.httpBody = try JSONEncoder().encode(["refresh_token": refreshToken])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateResponse(response, data: data)
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+
     private func authRequest(endpoint: String, email: String, password: String) async throws -> AuthResponse {
         var request = URLRequest(url: URL(string: "\(supabaseURL)/auth/v1/\(endpoint)")!)
         request.httpMethod = "POST"
@@ -156,6 +166,7 @@ final class SupabaseService {
 // MARK: - Supporting types
 struct AuthResponse: Codable {
     let access_token: String?
+    let refresh_token: String?
     let user: AuthUser?
 }
 
@@ -166,12 +177,34 @@ struct AuthUser: Codable {
 
 enum SupabaseError: LocalizedError {
     case httpError(statusCode: Int, message: String)
+    case noNetwork
     case unknown
 
     var errorDescription: String? {
         switch self {
-        case .httpError(_, let msg): return msg
-        case .unknown: return "An unknown error occurred"
+        case .httpError(let code, let msg):
+            // Surface a friendlier message for common HTTP codes
+            switch code {
+            case 401: return "You're not signed in. Please sign in and try again."
+            case 403: return "You don't have permission to do that."
+            case 429: return "Too many requests. Wait a moment and try again."
+            case 500...599: return "Our server hit a snag. Try again in a moment."
+            default: return msg
+            }
+        case .noNetwork: return "No internet connection. Check your connection and try again."
+        case .unknown: return "Something went wrong. Try again."
         }
+    }
+}
+
+// MARK: - Network availability check
+extension SupabaseService {
+    static func isNetworkError(_ error: Error) -> Bool {
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain &&
+            [NSURLErrorNotConnectedToInternet,
+             NSURLErrorNetworkConnectionLost,
+             NSURLErrorTimedOut,
+             NSURLErrorCannotConnectToHost].contains(nsError.code)
     }
 }

@@ -83,20 +83,43 @@ struct ResultsView: View {
 
     // MARK: - Stop cards
     private var stopList: some View {
-        VStack(spacing: 12) {
-            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                StopCard(
-                    stop: stop,
-                    index: idx,
-                    total: stops.count,
-                    isFirst: idx == 0,
-                    onStartHere: { navigateToLive = true }
-                )
+        Group {
+            if stops.isEmpty {
+                emptyStopsView
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                        StopCard(
+                            stop: stop,
+                            index: idx,
+                            total: stops.count,
+                            isFirst: idx == 0,
+                            onStartHere: { navigateToLive = true }
+                        )
+                    }
+                }
             }
         }
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 8)
+    }
+
+    private var emptyStopsView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "fork.knife.circle")
+                .font(.system(size: 40))
+                .foregroundColor(Color("SlateMid"))
+            Text("We couldn't find stops for this tour.")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(Color("TFTSlate"))
+            Text("Try a different neighborhood or adjust your preferences.")
+                .font(.system(size: 13))
+                .foregroundColor(Color("SlateMid"))
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 48)
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Bottom action bar

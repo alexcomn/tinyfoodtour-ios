@@ -45,7 +45,11 @@ final class TourViewModel: ObservableObject {
             let result: Tour = try await SupabaseService.shared.invokeFunction(name: "generate-tour", body: body)
             tour = result
         } catch {
-            generationError = error.localizedDescription
+            if SupabaseService.isNetworkError(error) {
+                generationError = "No internet connection. Check your connection and try again."
+            } else {
+                generationError = error.localizedDescription
+            }
         }
 
         messageTask?.cancel()
