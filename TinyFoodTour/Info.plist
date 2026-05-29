@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Tiny Food Tour uses your location to find nearby neighborhoods to explore.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tiny Food Tour lets you attach photos to your tour stops.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Tiny Food Tour lets you take photos at each tour stop.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+</dict>
+</plist>

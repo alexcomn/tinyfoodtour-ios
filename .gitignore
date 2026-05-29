@@ -1,0 +1,19 @@
+# Xcode
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.pbxuser
+DerivedData/
+build/
+*.ipa
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+generate_xcodeproj.py

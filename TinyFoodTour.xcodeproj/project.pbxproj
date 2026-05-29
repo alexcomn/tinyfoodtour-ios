@@ -1,0 +1,413 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CB71E75BF5E84179AB1CB7B3 /* TinyFoodTourApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F246DA238D45F8ACFB943B /* TinyFoodTourApp.swift */; };
+		1E647FA7501941869748FA76 /* Tour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 201AA0AC888144AB9975F467 /* Tour.swift */; };
+		C3A575A73EEA4B00853DD41F /* QuizStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E7572F5FC5B4A1DA9265E77 /* QuizStep.swift */; };
+		B33119002C8F4123A2B33AF1 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25959D3468FC4A9A9C4D06FF /* SupabaseService.swift */; };
+		312593CCC10943E1B1B9B384 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3762D2A280F4F0EBD465673 /* LocationService.swift */; };
+		D5CEF48B27B944F1A58BC9E4 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866F6B66BC39462096F6C9BB /* AuthViewModel.swift */; };
+		E0D365B72B7F42598A7FCA6C /* QuizViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9161191F4CA840B0AA45F009 /* QuizViewModel.swift */; };
+		41AD40A6770045B794C5C6EA /* TourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0661FC23F527492DB43D6F96 /* TourViewModel.swift */; };
+		2D468E197DF140FB98708FBF /* LiveTourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38288F29EB5149919EB4D0C7 /* LiveTourViewModel.swift */; };
+		E040EFD1CE68464997F086DA /* BrandMarkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A85034A470542589098BBFE /* BrandMarkView.swift */; };
+		89D12448672240DAA609655B /* StopLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB690911A70449738A169FA8 /* StopLabel.swift */; };
+		CD235648C1374CE29C2A8C24 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D09442677784763BC1DB1E0 /* HomeView.swift */; };
+		9D5E9EC89B7B482584792ABA /* QuizView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BE052BAA9C0438CAA6935C5 /* QuizView.swift */; };
+		8B25C7A71F0A48E991D339B2 /* NeighborhoodStepView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F61BA11E25742FB962C40C9 /* NeighborhoodStepView.swift */; };
+		EC4D0AE2FDF8481DAA447237 /* GeneratingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7EEA239ED304A81BB090AED /* GeneratingView.swift */; };
+		C562F2BC3E29431792801E12 /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28524D5807EB4C02A1FA4487 /* ResultsView.swift */; };
+		C1754CE30C5C43D882957288 /* LiveTourView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42FCDD5B7C1496DB667655A /* LiveTourView.swift */; };
+		9BCA6D4429C4451E8DAE3F75 /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF8AD70930049BBB690016A /* AuthView.swift */; };
+		53E4B764CE5B4EE7AAB2C1C2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 87EABE644C824F908EB4C8FA /* Assets.xcassets */; };
+		9FFEEED23AF9416BA85513BA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 069BE7E006894758AA9446F5 /* Preview Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		83F246DA238D45F8ACFB943B /* TinyFoodTourApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TinyFoodTourApp.swift; sourceTree = "<group>"; };
+		201AA0AC888144AB9975F467 /* Tour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tour.swift; sourceTree = "<group>"; };
+		9E7572F5FC5B4A1DA9265E77 /* QuizStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizStep.swift; sourceTree = "<group>"; };
+		25959D3468FC4A9A9C4D06FF /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		C3762D2A280F4F0EBD465673 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		866F6B66BC39462096F6C9BB /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		9161191F4CA840B0AA45F009 /* QuizViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizViewModel.swift; sourceTree = "<group>"; };
+		0661FC23F527492DB43D6F96 /* TourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TourViewModel.swift; sourceTree = "<group>"; };
+		38288F29EB5149919EB4D0C7 /* LiveTourViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourViewModel.swift; sourceTree = "<group>"; };
+		2A85034A470542589098BBFE /* BrandMarkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMarkView.swift; sourceTree = "<group>"; };
+		DB690911A70449738A169FA8 /* StopLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopLabel.swift; sourceTree = "<group>"; };
+		7D09442677784763BC1DB1E0 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		0BE052BAA9C0438CAA6935C5 /* QuizView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizView.swift; sourceTree = "<group>"; };
+		1F61BA11E25742FB962C40C9 /* NeighborhoodStepView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NeighborhoodStepView.swift; sourceTree = "<group>"; };
+		A7EEA239ED304A81BB090AED /* GeneratingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneratingView.swift; sourceTree = "<group>"; };
+		28524D5807EB4C02A1FA4487 /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		D42FCDD5B7C1496DB667655A /* LiveTourView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTourView.swift; sourceTree = "<group>"; };
+		CFF8AD70930049BBB690016A /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		51B1F88E3B7742B3A2272B42 /* TinyFoodTour.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyFoodTour.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		87EABE644C824F908EB4C8FA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		94F077A5A5224AAEAD2CF81C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		069BE7E006894758AA9446F5 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1464962FC22A4B29BE358F4F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08DB0771189A4306A159FA1C = {
+			isa = PBXGroup;
+			children = (
+				1993F59AEB734724934A5D72 /* TinyFoodTour */,
+				148450F2CF554BEDA903280D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		148450F2CF554BEDA903280D = {
+			isa = PBXGroup;
+			children = (
+				51B1F88E3B7742B3A2272B42 /* TinyFoodTour.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1993F59AEB734724934A5D72 = {
+			isa = PBXGroup;
+			children = (
+				83F246DA238D45F8ACFB943B /* TinyFoodTourApp.swift */,
+				078E2C04E9104C5BAB01B6E5 /* Models */,
+				6AC46016668341E5AA24D124 /* Services */,
+				E40B53B61EB041BA8C689EE3 /* ViewModels */,
+				559BE1AC6C1A4B10BFB44A70 /* Views */,
+				87EABE644C824F908EB4C8FA /* Assets.xcassets */,
+				94F077A5A5224AAEAD2CF81C /* Info.plist */,
+				9D4C796296724245A00ED634 /* Preview Content */,
+			);
+			path = TinyFoodTour;
+			sourceTree = "<group>";
+		};
+		9D4C796296724245A00ED634 = {
+			isa = PBXGroup;
+			children = (
+				069BE7E006894758AA9446F5 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		078E2C04E9104C5BAB01B6E5 = {
+			isa = PBXGroup;
+			children = (
+				201AA0AC888144AB9975F467 /* Tour.swift */,
+				9E7572F5FC5B4A1DA9265E77 /* QuizStep.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		6AC46016668341E5AA24D124 = {
+			isa = PBXGroup;
+			children = (
+				25959D3468FC4A9A9C4D06FF /* SupabaseService.swift */,
+				C3762D2A280F4F0EBD465673 /* LocationService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E40B53B61EB041BA8C689EE3 = {
+			isa = PBXGroup;
+			children = (
+				866F6B66BC39462096F6C9BB /* AuthViewModel.swift */,
+				9161191F4CA840B0AA45F009 /* QuizViewModel.swift */,
+				0661FC23F527492DB43D6F96 /* TourViewModel.swift */,
+				38288F29EB5149919EB4D0C7 /* LiveTourViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		559BE1AC6C1A4B10BFB44A70 = {
+			isa = PBXGroup;
+			children = (
+				DFD40F306EA74520AB36BA76 /* Shared */,
+				2A10331B7B7742F284A49892 /* Home */,
+				BD5B6A8FF3EF46E3852B7C12 /* Quiz */,
+				F05F4B73831845AFA40C7821 /* Generating */,
+				ADDBCFC916EA4910AC6560E5 /* Results */,
+				D290F1BC3E1049858F60637E /* LiveTour */,
+				474F5A79DDCB4DA7BD1D7B1A /* Auth */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DFD40F306EA74520AB36BA76 = {
+			isa = PBXGroup;
+			children = (
+				2A85034A470542589098BBFE /* BrandMarkView.swift */,
+				DB690911A70449738A169FA8 /* StopLabel.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		2A10331B7B7742F284A49892 = {
+			isa = PBXGroup;
+			children = (
+				7D09442677784763BC1DB1E0 /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		BD5B6A8FF3EF46E3852B7C12 = {
+			isa = PBXGroup;
+			children = (
+				0BE052BAA9C0438CAA6935C5 /* QuizView.swift */,
+				1F61BA11E25742FB962C40C9 /* NeighborhoodStepView.swift */,
+			);
+			path = Quiz;
+			sourceTree = "<group>";
+		};
+		F05F4B73831845AFA40C7821 = {
+			isa = PBXGroup;
+			children = (
+				A7EEA239ED304A81BB090AED /* GeneratingView.swift */,
+			);
+			path = Generating;
+			sourceTree = "<group>";
+		};
+		ADDBCFC916EA4910AC6560E5 = {
+			isa = PBXGroup;
+			children = (
+				28524D5807EB4C02A1FA4487 /* ResultsView.swift */,
+			);
+			path = Results;
+			sourceTree = "<group>";
+		};
+		D290F1BC3E1049858F60637E = {
+			isa = PBXGroup;
+			children = (
+				D42FCDD5B7C1496DB667655A /* LiveTourView.swift */,
+			);
+			path = LiveTour;
+			sourceTree = "<group>";
+		};
+		474F5A79DDCB4DA7BD1D7B1A = {
+			isa = PBXGroup;
+			children = (
+				CFF8AD70930049BBB690016A /* AuthView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FB6DB2FF081A41938C0FBBFD /* TinyFoodTour */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ED8D15431E0648549B3DA511;
+			buildPhases = (
+				C476F97482AA41DDB4A52C2B /* Sources */,
+				1464962FC22A4B29BE358F4F /* Frameworks */,
+				5FA6ADADB88B4388BE7472CA /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TinyFoodTour;
+			productName = TinyFoodTour;
+			productReference = 51B1F88E3B7742B3A2272B42 /* TinyFoodTour.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E000449ED0254A4B9875EB94 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					FB6DB2FF081A41938C0FBBFD = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 09E19ECB425E423B8772F62E;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 08DB0771189A4306A159FA1C;
+			productRefGroup = 148450F2CF554BEDA903280D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FB6DB2FF081A41938C0FBBFD /* TinyFoodTour */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5FA6ADADB88B4388BE7472CA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				53E4B764CE5B4EE7AAB2C1C2 /* Assets.xcassets in Resources */,
+				9FFEEED23AF9416BA85513BA /* Preview Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C476F97482AA41DDB4A52C2B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CB71E75BF5E84179AB1CB7B3 /* TinyFoodTourApp.swift in Sources */,
+				1E647FA7501941869748FA76 /* Tour.swift in Sources */,
+				C3A575A73EEA4B00853DD41F /* QuizStep.swift in Sources */,
+				B33119002C8F4123A2B33AF1 /* SupabaseService.swift in Sources */,
+				312593CCC10943E1B1B9B384 /* LocationService.swift in Sources */,
+				D5CEF48B27B944F1A58BC9E4 /* AuthViewModel.swift in Sources */,
+				E0D365B72B7F42598A7FCA6C /* QuizViewModel.swift in Sources */,
+				41AD40A6770045B794C5C6EA /* TourViewModel.swift in Sources */,
+				2D468E197DF140FB98708FBF /* LiveTourViewModel.swift in Sources */,
+				E040EFD1CE68464997F086DA /* BrandMarkView.swift in Sources */,
+				89D12448672240DAA609655B /* StopLabel.swift in Sources */,
+				CD235648C1374CE29C2A8C24 /* HomeView.swift in Sources */,
+				9D5E9EC89B7B482584792ABA /* QuizView.swift in Sources */,
+				8B25C7A71F0A48E991D339B2 /* NeighborhoodStepView.swift in Sources */,
+				EC4D0AE2FDF8481DAA447237 /* GeneratingView.swift in Sources */,
+				C562F2BC3E29431792801E12 /* ResultsView.swift in Sources */,
+				C1754CE30C5C43D882957288 /* LiveTourView.swift in Sources */,
+				9BCA6D4429C4451E8DAE3F75 /* AuthView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CAA1C3DC224642AEAA9CDDEB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		3B6D8E4D1EA34DB0B5546895 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		215140BE8F974154A6BED43A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TinyFoodTour/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tinyfoodtour.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		ADCF67A90D2647728D9EACB4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = TinyFoodTour/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tinyfoodtour.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		09E19ECB425E423B8772F62E /* Build configuration list for PBXProject "TinyFoodTour" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CAA1C3DC224642AEAA9CDDEB /* Debug */,
+				3B6D8E4D1EA34DB0B5546895 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ED8D15431E0648549B3DA511 /* Build configuration list for PBXNativeTarget "TinyFoodTour" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				215140BE8F974154A6BED43A /* Debug */,
+				ADCF67A90D2647728D9EACB4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = E000449ED0254A4B9875EB94 /* Project object */;
+}
