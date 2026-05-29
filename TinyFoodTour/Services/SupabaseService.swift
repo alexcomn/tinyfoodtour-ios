@@ -89,7 +89,27 @@ final class SupabaseService {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, response) = try await URLSession.shared.data(for: request)
         try validateResponse(response, data: data)
-        return try JSONDecoder().decode(T.self, from: data)
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            // Log the raw response and detailed decoding error so we can diagnose missing fields
+            let raw = String(data: data, encoding: .utf8) ?? "<non-UTF8>"
+            print("⚠️ [\(name)] Decode failed: \(error)")
+            print("⚠️ [\(name)] Raw response: \(raw)")
+            if let decodingError = error as? DecodingError {
+                switch decodingError {
+                case .keyNotFound(let key, let ctx):
+                    print("⚠️  keyNotFound: \(key.stringValue) at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))")
+                case .valueNotFound(let type, let ctx):
+                    print("⚠️  valueNotFound: \(type) at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))")
+                case .typeMismatch(let type, let ctx):
+                    print("⚠️  typeMismatch: expected \(type) at \(ctx.codingPath.map(\.stringValue).joined(separator: "."))")
+                default:
+                    print("⚠️  \(decodingError)")
+                }
+            }
+            throw error
+        }
     }
 
     // MARK: - Auth
