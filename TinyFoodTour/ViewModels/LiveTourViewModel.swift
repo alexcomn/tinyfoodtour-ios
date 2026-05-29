@@ -42,9 +42,19 @@ final class LiveTourViewModel: ObservableObject {
             isLoading = false
             return
         }
-        let stopsData = try? JSONSerialization.data(withJSONObject: row.stops.value)
-        var stops = (stopsData.flatMap { try? JSONDecoder().decode([TourStop].self, from: $0) }) ?? []
-        stops = stops.filter { ($0 as AnyObject).value(forKey: "_meta") == nil }
+        // Decode stops the same way as Tour.init(from:) — strip _meta entries first,
+        // then decode each dict individually so one bad stop doesn't kill the array.
+        let stops: [TourStop]
+        if let arr = row.stops.value as? [[String: Any]] {
+            stops = arr
+                .filter { $0["_meta"] as? Bool != true }
+                .compactMap { dict in
+                    guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+                    return try? JSONDecoder().decode(TourStop.self, from: data)
+                }
+        } else {
+            stops = []
+        }
         tour = Tour(id: row.id, neighborhood: row.neighborhood, vibe: row.vibe,
                     dietary: row.dietary, walk_distance: row.walk_distance,
                     stops: stops, created_at: row.created_at,

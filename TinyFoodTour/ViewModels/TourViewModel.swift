@@ -93,8 +93,16 @@ final class SavedToursViewModel: ObservableObject {
             if let rows: [Row] = try? await supabase.query(
                 table: "tours", select: "*", filters: ["share_token": "eq.\(token)"]) {
                 for row in rows {
-                    let stopsData = try? JSONSerialization.data(withJSONObject: row.stops.value)
-                    let stops = (stopsData.flatMap { try? JSONDecoder().decode([TourStop].self, from: $0) }) ?? []
+                    // Strip _meta before decoding — same pattern as Tour.init(from:)
+                    let stops: [TourStop]
+                    if let arr = row.stops.value as? [[String: Any]] {
+                        stops = arr
+                            .filter { $0["_meta"] as? Bool != true }
+                            .compactMap { dict in
+                                guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+                                return try? JSONDecoder().decode(TourStop.self, from: data)
+                            }
+                    } else { stops = [] }
                     tours.append(Tour(
                         id: row.id, neighborhood: row.neighborhood, vibe: row.vibe,
                         dietary: row.dietary, walk_distance: row.walk_distance,

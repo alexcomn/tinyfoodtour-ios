@@ -114,6 +114,10 @@ struct HomeView: View {
             }
         }
         .darkStatusBar()
+        .onAppear {
+            // Reload each time home becomes visible so saves from ResultsView appear
+            Task { await savedToursVM.load() }
+        }
         .task {
             await savedToursVM.load()
         }

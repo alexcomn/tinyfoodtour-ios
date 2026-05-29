@@ -14,8 +14,17 @@ struct ResultsView: View {
     @StateObject private var savedVM = SavedToursViewModel()
     @State private var navigateToLive = false
     @State private var isSaved = false
+    @State private var currentTour: Tour
+    @State private var shufflingIndex: Int? = nil
 
-    private var stops: [TourStop] { tour.stops }
+    init(tour: Tour, isShared: Bool, generationParams: QuizAnswers?) {
+        self.tour = tour
+        self.isShared = isShared
+        self.generationParams = generationParams
+        _currentTour = State(initialValue: tour)
+    }
+
+    private var stops: [TourStop] { currentTour.stops }
 
     private var tourMetaLine: String {
         var parts = ["\(stops.count) stops"]
@@ -94,7 +103,9 @@ struct ResultsView: View {
                             index: idx,
                             total: stops.count,
                             isFirst: idx == 0,
-                            onStartHere: { navigateToLive = true }
+                            isShuffling: shufflingIndex == idx,
+                            onStartHere: { navigateToLive = true },
+                            onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
                         )
                     }
                 }
@@ -103,6 +114,35 @@ struct ResultsView: View {
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 8)
+    }
+
+    // MARK: - Shuffle
+    private func shuffleStop(at index: Int) async {
+        guard shufflingIndex == nil else { return }
+        shufflingIndex = index
+        struct ShuffleResponse: Codable { let stop: TourStop? }
+        do {
+            let result: ShuffleResponse = try await SupabaseService.shared.invokeFunction(
+                name: "shuffle-stop",
+                body: ["tour_id": currentTour.id, "stop_index": index]
+            )
+            if let newStop = result.stop {
+                var newStops = currentTour.stops
+                newStops[index] = newStop
+                currentTour = Tour(
+                    id: currentTour.id, neighborhood: currentTour.neighborhood,
+                    vibe: currentTour.vibe, dietary: currentTour.dietary,
+                    walk_distance: currentTour.walk_distance, stops: newStops,
+                    created_at: currentTour.created_at, user_id: currentTour.user_id,
+                    share_token: currentTour.share_token,
+                    tourTitle: currentTour.tourTitle,
+                    totalDistanceMiles: currentTour.totalDistanceMiles
+                )
+            }
+        } catch {
+            // Shuffle failed silently — user can try again
+        }
+        shufflingIndex = nil
     }
 
     private var emptyStopsView: some View {
@@ -140,7 +180,7 @@ struct ResultsView: View {
                 .buttonStyle(.plain)
 
                 Button {
-                    savedVM.saveTour(token: tour.share_token)
+                    savedVM.saveTour(token: currentTour.share_token)
                     isSaved = true
                 } label: {
                     Label(isSaved ? "Saved!" : "Save tour", systemImage: isSaved ? "bookmark.fill" : "bookmark")
@@ -160,7 +200,9 @@ struct StopCard: View {
     let index: Int
     let total: Int
     let isFirst: Bool
+    let isShuffling: Bool
     let onStartHere: () -> Void
+    let onShuffle: (() -> Void)?
 
     private var stopColor: Color { StopLabel.color(index: index) }
     private var stopLabel: String { StopLabel.label(index: index, total: total) }
@@ -217,29 +259,44 @@ struct StopCard: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Walk time or "Start here" pill
-                if isFirst {
-                    Button(action: onStartHere) {
-                        HStack(spacing: 3) {
-                            Image(systemName: "mappin")
-                                .font(.system(size: 9))
-                            Text("Start here")
-                                .font(.system(size: 10, weight: .medium))
+                // Shuffle + walk time / start here
+                HStack(spacing: 8) {
+                    // Shuffle button (hidden on shared tours)
+                    if let shuffle = onShuffle {
+                        Button(action: shuffle) {
+                            Image(systemName: isShuffling ? "arrow.2.circlepath" : "arrow.2.circlepath")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color("SlateMid"))
+                                .rotationEffect(isShuffling ? .degrees(360) : .degrees(0))
+                                .animation(isShuffling ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: isShuffling)
                         }
-                        .foregroundColor(Color("Radish"))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color("Radish").opacity(0.35), lineWidth: 1)
-                        )
+                        .buttonStyle(.plain)
+                        .disabled(isShuffling)
                     }
-                    .buttonStyle(.plain)
-                } else if let walk = stop.walk_time_from_previous, walk != "Starting point", !walk.isEmpty {
-                    Text(walk)
-                        .font(.system(size: 11))
-                        .foregroundColor(Color("SlateMid"))
-                        .fixedSize()
+
+                    if isFirst {
+                        Button(action: onStartHere) {
+                            HStack(spacing: 3) {
+                                Image(systemName: "mappin")
+                                    .font(.system(size: 9))
+                                Text("Start here")
+                                    .font(.system(size: 10, weight: .medium))
+                            }
+                            .foregroundColor(Color("Radish"))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color("Radish").opacity(0.35), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    } else if let walk = stop.walk_time_from_previous, walk != "Starting point", !walk.isEmpty {
+                        Text(walk)
+                            .font(.system(size: 11))
+                            .foregroundColor(Color("SlateMid"))
+                            .fixedSize()
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -412,7 +469,9 @@ struct TourMapView: View {
 
     var body: some View {
         let located = stops.filter { $0.lat != nil && $0.lng != nil }
-        Map(position: $position) {
+        // .constant so the Map doesn't register pan gesture recognizers
+        // that compete with the parent ScrollView
+        Map(position: .constant(position)) {
             ForEach(located) { stop in
                 Annotation("", coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!)) {
                     ZStack {
