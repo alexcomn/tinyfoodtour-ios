@@ -37,10 +37,11 @@ def make_tile(size: int, logo_fraction: float = 0.55) -> Image.Image:
     tile.paste(logo, (x, y), logo)
     return tile.convert("RGB")
 
-def make_launch(size: int = 2732) -> Image.Image:
-    """Creates the universal launch storyboard image (centred logo, ~28% width)."""
+def make_launch(size: int = 375) -> Image.Image:
+    """Creates a square launch image (centred logo, ~65% of canvas width).
+    UILaunchScreen centers this on the Tomato background color."""
     img = Image.new("RGBA", (size, size), TOMATO)
-    logo_size = int(size * 0.28)
+    logo_size = int(size * 0.65)
     logo = logo_src.copy()
     w, h = logo.size
     crop_h = w
@@ -123,26 +124,28 @@ with open(os.path.join(ICON_DIR, "Contents.json"), "w") as f:
     f.write(contents)
 print("  AppIcon Contents.json written")
 
-# ── Launch image ──────────────────────────────────────────────────────────────
-launch_img = make_launch(2732)
-launch_path = os.path.join(LAUNCH_DIR, "LaunchImage.png")
-launch_img.save(launch_path)
-print(f"  launch image 2732×2732 → LaunchImage.png")
+# ── Launch image — three scale variants ──────────────────────────────────────
+# Target display size: 375×375pt (fits within any iPhone width).
+# The UILaunchScreen UIColorName provides the full-bleed Tomato background;
+# this image sits centered on top of it.
+# Logo at 65% of canvas = ~244pt wide = ~63% of a 390pt screen.
+LAUNCH_PT = 375  # logical points
 
-launch_contents = """{
-  "images" : [
-    {
-      "filename" : "LaunchImage.png",
-      "idiom" : "universal",
-      "scale" : "1x"
-    }
-  ],
-  "info" : {
-    "author" : "xcode",
-    "version" : 1
-  }
-}
-"""
+launch_scales = [(1, LAUNCH_PT), (2, LAUNCH_PT * 2), (3, LAUNCH_PT * 3)]
+launch_images = []
+for scale, px in launch_scales:
+    fname = f"LaunchImage{'@' + str(scale) + 'x' if scale > 1 else ''}.png"
+    img = make_launch(px)
+    img.save(os.path.join(LAUNCH_DIR, fname))
+    launch_images.append((scale, fname))
+    print(f"  launch image {px}×{px}px @{scale}x → {fname}")
+
+launch_contents = '{\n  "images" : [\n'
+for scale, fname in launch_images:
+    launch_contents += f'    {{\n      "filename" : "{fname}",\n      "idiom" : "universal",\n      "scale" : "{scale}x"\n    }},\n'
+launch_contents = launch_contents.rstrip(",\n") + "\n  ],\n"
+launch_contents += '  "info" : {\n    "author" : "xcode",\n    "version" : 1\n  }\n}\n'
+
 with open(os.path.join(LAUNCH_DIR, "Contents.json"), "w") as f:
     f.write(launch_contents)
 print("  LaunchImage Contents.json written")
