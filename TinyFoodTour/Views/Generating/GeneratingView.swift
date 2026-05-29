@@ -54,14 +54,17 @@ struct GeneratingView: View {
                 .padding(.horizontal, 32)
             HStack(spacing: 12) {
                 Button {
-                    Task { await vm.generate(answers: answers) }
+                    Task {
+                        await vm.generate(answers: answers)
+                        if vm.tour != nil { navigateToResults = true }
+                    }
                 } label: {
                     Text("Try again")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
-                        .background(Color("Radish"))
+                        .background(Color("Primary"))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 Button {

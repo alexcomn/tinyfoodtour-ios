@@ -99,7 +99,10 @@ final class LiveTourViewModel: ObservableObject {
         let newCompleted = !currentProgress.completed
         progress[currentStopIndex].completed = newCompleted
         await saveProgress(stopIndex: currentStopIndex, userId: userId)
-        if newCompleted && allCompleted { showCompletionCard = true }
+        if newCompleted && allCompleted {
+            showCompletionCard = true
+            if let uid = userId { await recordTourCompletion(userId: uid) }
+        }
     }
 
     func saveNotes(userId: String?) async {
@@ -157,6 +160,21 @@ final class LiveTourViewModel: ObservableObject {
                 "tour_id": tourId
             ],
             onConflict: "user_id,place_id,tour_id"
+        )
+    }
+
+    private func recordTourCompletion(userId: String) async {
+        // Increment completed_tours_count in the user's profile
+        // Uses Supabase RPC-style: read then write (no RPC function available)
+        struct ProfileRow: Codable { let completed_tours_count: Int? }
+        guard let rows: [ProfileRow] = try? await supabase.query(
+            table: "profiles", select: "completed_tours_count",
+            filters: ["id": "eq.\(userId)"]
+        ), let current = rows.first?.completed_tours_count else { return }
+        try? await supabase.upsert(
+            table: "profiles",
+            body: ["id": userId, "completed_tours_count": current + 1],
+            onConflict: "id"
         )
     }
 

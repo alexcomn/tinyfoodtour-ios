@@ -37,35 +37,23 @@ final class ProfileViewModel: ObservableObject {
             completedToursCount = row.completed_tours_count ?? 0
         }
 
-        // Saved tours (joined with tours table for neighborhood + stop count)
-        struct SavedRow: Codable { let tour_id: String }
-        if let savedRows: [SavedRow] = try? await supabase.query(
-            table: "saved_tours",
-            select: "tour_id",
-            filters: ["user_id": "eq.\(userId)"],
-            order: "created_at.desc"
-        ) {
-            var tours: [ProfileTour] = []
-            for row in savedRows.prefix(20) {
-                struct TourRow: Codable {
-                    let id: String
-                    let neighborhood: String
-                    let stops: AnyCodable
-                }
-                if let tourRows: [TourRow] = try? await supabase.query(
-                    table: "tours",
-                    select: "id,neighborhood,stops",
-                    filters: ["id": "eq.\(row.tour_id)"]
-                ), let t = tourRows.first {
-                    let count: Int
-                    if let arr = t.stops.value as? [[String: Any]] {
-                        count = arr.filter { $0["_meta"] as? Bool != true }.count
-                    } else { count = 0 }
-                    tours.append(ProfileTour(id: t.id, neighborhood: t.neighborhood, stopCount: count))
-                }
+        // Saved tours — read from UserDefaults (same store as HomeView/SavedToursViewModel)
+        let tokens = (UserDefaults.standard.stringArray(forKey: "tft_saved_tour_tokens") ?? [])
+        var tours: [ProfileTour] = []
+        for token in tokens.prefix(20) {
+            struct TourRow: Codable { let id: String; let neighborhood: String; let stops: AnyCodable }
+            if let rows: [TourRow] = try? await supabase.query(
+                table: "tours", select: "id,neighborhood,stops",
+                filters: ["share_token": "eq.\(token)"]
+            ), let t = rows.first {
+                let count: Int
+                if let arr = t.stops.value as? [[String: Any]] {
+                    count = arr.filter { $0["_meta"] as? Bool != true }.count
+                } else { count = 0 }
+                tours.append(ProfileTour(id: t.id, neighborhood: t.neighborhood, stopCount: count))
             }
-            savedTours = tours
         }
+        savedTours = tours
 
         // Favourites
         struct FavRow: Codable {
