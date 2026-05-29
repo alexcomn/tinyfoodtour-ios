@@ -13,7 +13,21 @@ struct LiveTourView: View {
             if vm.isLoading {
                 loadingView
             } else if let error = vm.errorMessage, vm.tour == nil {
-                Text(error).foregroundColor(.secondary).padding()
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.system(size: 36))
+                        .foregroundColor(Color("SlateMid"))
+                    Text(error)
+                        .font(.system(size: 15))
+                        .foregroundColor(Color("SlateMid"))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                    Button("← Go back") { dismiss() }
+                        .font(.system(size: 14))
+                        .foregroundColor(Color("Primary"))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color("Cream"))
             } else if let tour = vm.tour {
                 mainContent(tour: tour)
             }
@@ -22,7 +36,9 @@ struct LiveTourView: View {
         .navigationBarBackButtonHidden(false)
         .darkStatusBar()
         .sheet(isPresented: $vm.showCompletionCard) {
-            CompletionCardView(tour: vm.tour!)
+            if let tour = vm.tour {
+                CompletionCardView(tour: tour)
+            }
         }
         .task {
             await vm.load(tourId: tourId, userId: authVM.currentUser?.id)
@@ -63,7 +79,7 @@ struct LiveTourView: View {
             // Prev / Next nav
             stopNavBar(tour: tour)
         }
-        .background(Color(.systemBackground))
+        .background(Color("Cream"))
         .ignoresSafeArea(edges: .bottom)
     }
 
@@ -71,6 +87,7 @@ struct LiveTourView: View {
         HStack(spacing: 8) {
             ForEach(0..<tour.stops.count, id: \.self) { i in
                 Button {
+                    Task { await vm.saveNotes(userId: authVM.currentUser?.id) }
                     vm.currentStopIndex = i
                     vm.noteText = vm.progress[safe: i]?.notes ?? ""
                 } label: {
@@ -90,6 +107,8 @@ struct LiveTourView: View {
         HStack {
             Button {
                 guard vm.currentStopIndex > 0 else { return }
+                // Auto-save any unsaved notes before leaving this stop
+                Task { await vm.saveNotes(userId: authVM.currentUser?.id) }
                 vm.currentStopIndex -= 1
                 vm.noteText = vm.progress[safe: vm.currentStopIndex]?.notes ?? ""
             } label: {
@@ -109,6 +128,7 @@ struct LiveTourView: View {
 
             if vm.currentStopIndex < tour.stops.count - 1 {
                 Button {
+                    Task { await vm.saveNotes(userId: authVM.currentUser?.id) }
                     vm.currentStopIndex += 1
                     vm.noteText = vm.progress[safe: vm.currentStopIndex]?.notes ?? ""
                 } label: {
@@ -255,6 +275,7 @@ struct StopDetailView: View {
                 }
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(progress.completed ? "Visited — tap to unmark" : "Mark \(stop.name) as visited")
             .padding(.horizontal, 20)
 
             // Notes

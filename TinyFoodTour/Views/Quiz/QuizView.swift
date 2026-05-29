@@ -108,10 +108,14 @@ struct QuizView: View {
         FlowLayout(spacing: 8) {
             ForEach(vm.currentOptions, id: \.self) { option in
                 PillButton(label: option, isSelected: vm.isSelected(option)) {
+                    let stepBefore = vm.stepIndex
                     vm.toggleOption(option)
-                    // Auto-advance single-select (non-neighborhood) steps
+                    // Auto-advance single-select steps after a brief visual confirmation
                     if vm.currentDbStep?.step_type != "multi_select" {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 150_000_000)
+                            // Only advance if the user hasn't already navigated
+                            guard vm.stepIndex == stepBefore else { return }
                             advance()
                         }
                     }

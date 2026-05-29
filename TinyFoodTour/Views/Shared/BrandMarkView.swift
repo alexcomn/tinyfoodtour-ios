@@ -30,12 +30,13 @@ struct PillButton: View {
                 .background(isSelected ? Color("PizzaCrust") : Color("Cream"))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        // Selected: Yolk border — matches web "border-yolk"
                         .stroke(isSelected ? Color("Yolk") : Color("Foreground").opacity(0.15), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
     }
 }
 
@@ -73,6 +74,9 @@ struct QuizProgressBar: View {
                     .frame(height: 3)
             }
         }
+        .accessibilityElement()
+        .accessibilityLabel("Step \(current + 1) of \(total)")
+        .accessibilityValue("\(Int(Double(current + 1) / Double(total) * 100))% complete")
     }
 }
 
