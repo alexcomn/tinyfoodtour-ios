@@ -73,7 +73,7 @@ struct QuizView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(vm.currentTitle)
                         .font(.system(size: 26, weight: .bold, design: .serif))
-                        .foregroundColor(Color("TFTSlate"))
+                        .foregroundColor(Color("Foreground"))
                         .padding(.horizontal, 20)
                         .padding(.top, 4)
 
@@ -100,7 +100,7 @@ struct QuizView: View {
             // Sticky footer nav
             bottomNav
         }
-        .background(Color(.systemBackground))
+        .background(Color("Cream"))
         .ignoresSafeArea(edges: .bottom)
     }
 

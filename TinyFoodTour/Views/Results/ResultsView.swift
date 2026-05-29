@@ -17,6 +17,19 @@ struct ResultsView: View {
 
     private var stops: [TourStop] { tour.stops }
 
+    private var tourMetaLine: String {
+        var parts = ["\(stops.count) stops"]
+        if let miles = tour.totalDistanceMiles { parts.append(String(format: "~%.1f mi", miles)) }
+        // Rough walking time from distance (or sum of individual walk times)
+        let totalMins = stops.compactMap { s -> Int? in
+            guard let walk = s.walk_time_from_previous else { return nil }
+            let nums = walk.components(separatedBy: CharacterSet.decimalDigits.inverted).compactMap(Int.init)
+            return nums.first
+        }.reduce(0, +)
+        if totalMins > 0 { parts.append("~\(totalMins) min walking") }
+        return parts.joined(separator: " · ")
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
@@ -43,19 +56,14 @@ struct ResultsView: View {
 
             Text(tour.displayTitle)
                 .font(.system(size: 30, weight: .bold, design: .serif))
-                .foregroundColor(Color("Radish"))
+                .foregroundColor(Color("Primary"))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 6)
 
-            HStack(spacing: 6) {
-                ForEach(tour.vibe.prefix(2), id: \.self) { tag in
-                    MetaChip(text: tag)
-                }
-                MetaChip(text: "\(stops.count) stops")
-                if let miles = tour.totalDistanceMiles {
-                    MetaChip(text: String(format: "%.1f mi", miles))
-                }
-            }
+            // Plain dot-separated line — matches web "3 stops · ~0.4 mi · ~10 min walking"
+            Text(tourMetaLine)
+                .font(.system(size: 13))
+                .foregroundColor(Color("SlateMid"))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
@@ -98,15 +106,12 @@ struct ResultsView: View {
                 Button {
                     navigateToLive = true
                 } label: {
-                    HStack {
-                        Image(systemName: "figure.walk")
-                        Text("Walk the tour →")
-                    }
+                    Text("Start my tour →")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color("Radish"))
+                    .background(Color("Primary"))
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)

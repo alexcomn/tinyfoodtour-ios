@@ -8,7 +8,7 @@ struct GeneratingView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
+            Color("Cream").ignoresSafeArea()
 
             if let error = vm.generationError {
                 errorView(error)

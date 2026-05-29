@@ -11,32 +11,45 @@ struct HomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Header — bg-pizza-crust with serif headline, matches web HomeHero
-                    VStack(spacing: 0) {
-                        BrandMarkView(fontSize: 22)
+                    // Hero — PizzaCrust bg, matches web HomeHero layout
+                    VStack(alignment: .leading, spacing: 0) {
+                        BrandMarkView(fontSize: 11)
                             .padding(.top, 52)
-                            .padding(.bottom, 20)
+                            .padding(.bottom, 24)
 
-                        Text("Your neighborhood,\none bite at a time.")
-                            .font(.system(size: 30, weight: .bold, design: .serif))
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(Color("Radish"))
-                            .padding(.horizontal, 28)
+                        // Eyebrow — orange tracked label (web: text-tft-orange, tracking)
+                        Text("A WALKING FOOD TOUR, BUILT FOR YOU")
+                            .font(.system(size: 10, weight: .medium))
+                            .tracking(1.8)
+                            .foregroundColor(Color("TFTOrange"))
                             .padding(.bottom, 10)
 
-                        Text("Answer a few questions and we'll build\nyou a personalized food tour.")
+                        // Headline — matches web "Every neighborhood is a menu."
+                        Text("Every neighborhood\nis a menu.")
+                            .font(.system(size: 34, weight: .bold, design: .serif))
+                            .foregroundColor(Color("Foreground"))
+                            .lineSpacing(2)
+                            .padding(.bottom, 14)
+
+                        // Body — matches web copy exactly
+                        Text("Tell us where you are and what you like. We'll build a food tour around you: personalized stops, all on foot.")
                             .font(.system(size: 15))
                             .foregroundColor(Color("SlateMid"))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 28)
+                            .lineSpacing(3)
                             .padding(.bottom, 28)
 
-                        CTAButton(title: "Start a Tour →", isEnabled: true) {
+                        CTAButton(title: "Get Started →", isEnabled: true) {
                             showQuiz = true
                         }
-                        .padding(.bottom, 48)
+
+                        Text("Works anywhere in the world")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color("SlateMid"))
+                            .padding(.top, 8)
+                            .padding(.bottom, 48)
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
                     .background(Color("PizzaCrust"))
 
                     Divider()

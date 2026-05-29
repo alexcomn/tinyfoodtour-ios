@@ -1,21 +1,16 @@
 import SwiftUI
 
+// Matches web BrandMark.tsx:
+//   font-body text-[10px] font-medium tracking-[0.25em] uppercase text-foreground
+// fontSize param scales for context (nav = 10, hero = 13)
 struct BrandMarkView: View {
-    var fontSize: CGFloat = 17
+    var fontSize: CGFloat = 11
 
-    // Wordmark: "TiNY FOOD TOUR" — lowercase 'i' is intentional (brand quirk)
     var body: some View {
-        HStack(spacing: 4) {
-            Text("TiNY")
-                .font(.system(size: fontSize, weight: .bold, design: .serif))
-                .foregroundColor(Color("Radish"))
-            Text("FOOD")
-                .font(.system(size: fontSize, weight: .bold, design: .serif))
-                .foregroundColor(Color("Yolk"))
-            Text("TOUR")
-                .font(.system(size: fontSize, weight: .bold, design: .serif))
-                .foregroundColor(Color("Radish"))
-        }
+        Text("TINY FOOD TOUR")
+            .font(.system(size: fontSize, weight: .medium))
+            .tracking(fontSize * 0.25)
+            .foregroundColor(Color("Foreground"))
     }
 }
 
@@ -29,13 +24,14 @@ struct PillButton: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 14))
-                .foregroundColor(isSelected ? Color("TFTSlate") : Color("TFTSlate"))
+                .foregroundColor(Color("Foreground"))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color("PizzaCrust") : Color.white)
+                .background(isSelected ? Color("PizzaCrust") : Color("Cream"))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(isSelected ? Color("Radish").opacity(0.5) : Color.primary.opacity(0.12), lineWidth: 1)
+                        // Selected: Yolk border — matches web "border-yolk"
+                        .stroke(isSelected ? Color("Yolk") : Color("Foreground").opacity(0.15), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         }
@@ -56,7 +52,7 @@ struct CTAButton: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(isEnabled ? Color("Radish") : Color.gray.opacity(0.4))
+                .background(isEnabled ? Color("Primary") : Color("TFTSlate").opacity(0.25))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .disabled(!isEnabled)
@@ -73,7 +69,7 @@ struct QuizProgressBar: View {
         HStack(spacing: 4) {
             ForEach(0..<total, id: \.self) { i in
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(i <= current ? Color("Radish") : Color.primary.opacity(0.1))
+                    .fill(i <= current ? Color("Radish") : Color("Foreground").opacity(0.12))
                     .frame(height: 3)
             }
         }
