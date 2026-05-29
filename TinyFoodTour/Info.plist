@@ -22,10 +22,6 @@
 	<dict>
 		<key>UIColorName</key>
 		<string>Tomato</string>
-		<key>UIImageName</key>
-		<string>LaunchImage</string>
-		<key>UIImageRespectsSafeAreaInsets</key>
-		<true/>
 	</dict>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
