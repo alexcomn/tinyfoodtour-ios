@@ -19,8 +19,8 @@ struct TinyFoodTourApp: App {
             }
             .task {
                 // Hold splash briefly, then fade out
-                try? await Task.sleep(nanoseconds: 1_200_000_000)
-                withAnimation(.easeOut(duration: 0.4)) {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                withAnimation(.easeOut(duration: 0.6)) {
                     showSplash = false
                 }
             }
