@@ -54,10 +54,9 @@ struct HomeView: View {
                     .padding(.horizontal, 24)
                     .background(Color("PizzaCrust"))
 
-                    Divider()
-
                     // Past tours section
                     if !savedToursVM.savedTours.isEmpty {
+                        Divider()
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Past Tours")
                                 .font(.system(size: 18, weight: .semibold, design: .serif))
