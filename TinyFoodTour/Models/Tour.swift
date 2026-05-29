@@ -88,7 +88,19 @@ struct Tour: Codable, Identifiable {
         vibe          = (try? c.decode([String].self, forKey: .vibe)) ?? []
         dietary       = (try? c.decode([String].self, forKey: .dietary)) ?? []
         walk_distance = (try? c.decode(String.self, forKey: .walk_distance)) ?? ""
-        stops         = (try? c.decode([TourStop].self, forKey: .stops)) ?? []
+        // Decode stops as raw dicts first so we can strip _meta entries
+        // (the edge function injects _meta stops that the web app also filters out)
+        if let raw = try? c.decode(AnyCodable.self, forKey: .stops),
+           let arr = raw.value as? [[String: Any]] {
+            stops = arr
+                .filter { $0["_meta"] as? Bool != true }
+                .compactMap { dict in
+                    guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+                    return try? JSONDecoder().decode(TourStop.self, from: data)
+                }
+        } else {
+            stops = []
+        }
         created_at    = (try? c.decode(String.self, forKey: .created_at)) ?? ""
         user_id       = try? c.decode(String.self, forKey: .user_id)
         share_token   = (try? c.decode(String.self, forKey: .share_token)) ?? ""

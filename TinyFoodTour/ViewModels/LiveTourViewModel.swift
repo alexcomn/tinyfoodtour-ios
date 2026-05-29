@@ -80,11 +80,12 @@ final class LiveTourViewModel: ObservableObject {
 
         let firstIncomplete = progress.firstIndex(where: { !$0.completed }) ?? 0
         currentStopIndex = firstIncomplete
-        noteText = progress[firstIncomplete].notes
+        noteText = progress[safe: firstIncomplete]?.notes ?? ""
         isLoading = false
     }
 
     func checkOff(userId: String?) async {
+        guard currentStopIndex < progress.count else { return }
         let newCompleted = !currentProgress.completed
         progress[currentStopIndex].completed = newCompleted
         await saveProgress(stopIndex: currentStopIndex, userId: userId)
@@ -92,11 +93,13 @@ final class LiveTourViewModel: ObservableObject {
     }
 
     func saveNotes(userId: String?) async {
+        guard currentStopIndex < progress.count else { return }
         progress[currentStopIndex].notes = noteText
         await saveProgress(stopIndex: currentStopIndex, userId: userId)
     }
 
     private func saveProgress(stopIndex: Int, userId: String?) async {
+        guard stopIndex < progress.count else { return }
         isSaving = true
         defer { isSaving = false }
         try? await supabase.upsert(
@@ -154,6 +157,7 @@ final class LiveTourViewModel: ObservableObject {
         let path = "\(tourId)/\(currentStopIndex)/\(UUID().uuidString).\(ext)"
         do {
             let url = try await supabase.uploadPhoto(bucket: "tour-photos", path: path, data: data)
+            guard currentStopIndex < progress.count else { return }
             progress[currentStopIndex].photos.append(url)
             try? await supabase.insert(
                 table: "tour_stop_photos",
