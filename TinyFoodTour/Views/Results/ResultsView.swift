@@ -22,7 +22,7 @@ struct ResultsView: View {
                     BrandMarkView()
                         .padding(.bottom, 4)
 
-                    Text(tour.neighborhood)
+                    Text(tour.displayTitle)
                         .font(.system(size: 28, weight: .bold, design: .serif))
                         .foregroundColor(.primary)
 
@@ -31,6 +31,9 @@ struct ResultsView: View {
                             TagChip(text: tag)
                         }
                         TagChip(text: "\(stopCount) stops")
+                        if let miles = tour.totalDistanceMiles {
+                            TagChip(text: String(format: "%.1f mi", miles))
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -54,7 +57,7 @@ struct ResultsView: View {
                 // Action buttons
                 VStack(spacing: 12) {
                     if !isShared {
-                        CTAButton(title: "Start the Tour →", isEnabled: true) {
+                        CTAButton(title: "Walk the tour →", isEnabled: true) {
                             navigateToLive = true
                         }
                         .frame(maxWidth: .infinity)

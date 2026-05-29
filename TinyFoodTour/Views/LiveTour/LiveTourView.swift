@@ -249,7 +249,7 @@ struct StopDetailView: View {
                     Image(systemName: progress.completed ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 20))
                         .foregroundColor(progress.completed ? .green : .secondary)
-                    Text(progress.completed ? "Visited!" : "Mark as visited")
+                    Text(progress.completed ? "Stop checked off! 🎉" : "Mark this stop as visited")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(progress.completed ? .green : .primary)
                 }
@@ -383,9 +383,10 @@ struct CompletionCardView: View {
         VStack(spacing: 20) {
             BrandMarkView(fontSize: 20)
                 .padding(.top, 32)
-            Text("Tour complete! 🎉")
+            Text("You conquered today's\nTiNY FOOD TOUR!")
                 .font(.system(size: 26, weight: .bold, design: .serif))
-            Text("You explored \(tour.neighborhood) like a local.")
+                .multilineTextAlignment(.center)
+            Text("Every stop in \(tour.neighborhood), on foot.")
                 .font(.system(size: 15))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

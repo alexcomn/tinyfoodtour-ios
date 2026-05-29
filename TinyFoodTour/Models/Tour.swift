@@ -72,13 +72,18 @@ struct Tour: Codable, Identifiable {
     let created_at: String
     let user_id: String?
     let share_token: String
+    // Extracted from the _meta synthetic stop injected by the edge function (§4.12)
+    let tourTitle: String?
+    let totalDistanceMiles: Double?
 
     init(id: String, neighborhood: String, vibe: [String], dietary: [String],
          walk_distance: String, stops: [TourStop], created_at: String,
-         user_id: String?, share_token: String) {
+         user_id: String?, share_token: String,
+         tourTitle: String? = nil, totalDistanceMiles: Double? = nil) {
         self.id = id; self.neighborhood = neighborhood; self.vibe = vibe
         self.dietary = dietary; self.walk_distance = walk_distance; self.stops = stops
         self.created_at = created_at; self.user_id = user_id; self.share_token = share_token
+        self.tourTitle = tourTitle; self.totalDistanceMiles = totalDistanceMiles
     }
 
     init(from decoder: Decoder) throws {
@@ -88,10 +93,22 @@ struct Tour: Codable, Identifiable {
         vibe          = (try? c.decode([String].self, forKey: .vibe)) ?? []
         dietary       = (try? c.decode([String].self, forKey: .dietary)) ?? []
         walk_distance = (try? c.decode(String.self, forKey: .walk_distance)) ?? ""
-        // Decode stops as raw dicts first so we can strip _meta entries
-        // (the edge function injects _meta stops that the web app also filters out)
+        created_at    = (try? c.decode(String.self, forKey: .created_at)) ?? ""
+        user_id       = try? c.decode(String.self, forKey: .user_id)
+        share_token   = (try? c.decode(String.self, forKey: .share_token)) ?? ""
+
+        // Decode stops as raw dicts so we can: (a) strip _meta entries,
+        // (b) extract tour_title / total_distance_miles from the synthetic _meta stop
+        var extractedTitle: String? = nil
+        var extractedMiles: Double? = nil
         if let raw = try? c.decode(AnyCodable.self, forKey: .stops),
            let arr = raw.value as? [[String: Any]] {
+            // Pull metadata from the _meta stop before filtering
+            if let metaStop = arr.first(where: { $0["_meta"] as? Bool == true }),
+               let meta = metaStop["_meta"] as? [String: Any] {
+                extractedTitle = meta["tour_title"] as? String
+                extractedMiles = meta["total_distance_miles"] as? Double
+            }
             stops = arr
                 .filter { $0["_meta"] as? Bool != true }
                 .compactMap { dict in
@@ -101,9 +118,13 @@ struct Tour: Codable, Identifiable {
         } else {
             stops = []
         }
-        created_at    = (try? c.decode(String.self, forKey: .created_at)) ?? ""
-        user_id       = try? c.decode(String.self, forKey: .user_id)
-        share_token   = (try? c.decode(String.self, forKey: .share_token)) ?? ""
+        tourTitle = extractedTitle
+        totalDistanceMiles = extractedMiles
+    }
+
+    /// Display title: AI-generated tour title from _meta, fallback to neighborhood
+    var displayTitle: String {
+        tourTitle ?? "\(neighborhood) Tour"
     }
 }
 

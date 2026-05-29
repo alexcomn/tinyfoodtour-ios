@@ -38,7 +38,7 @@ final class LiveTourViewModel: ObservableObject {
         guard let rows: [TourRow] = try? await supabase.query(
             table: "tours", select: "*", filters: ["id": "eq.\(tourId)"]),
               let row = rows.first else {
-            errorMessage = "Tour not found."
+            errorMessage = "Couldn't load this tour. Go back and try again."
             isLoading = false
             return
         }
@@ -164,7 +164,7 @@ final class LiveTourViewModel: ObservableObject {
                 body: ["tour_id": tourId, "stop_index": currentStopIndex, "photo_url": url]
             )
         } catch {
-            errorMessage = "Photo upload failed: \(error.localizedDescription)"
+            errorMessage = "Couldn't save that photo. Try again."
         }
     }
 }

@@ -3,15 +3,16 @@ import SwiftUI
 struct BrandMarkView: View {
     var fontSize: CGFloat = 17
 
+    // Wordmark: "TiNY FOOD TOUR" — lowercase 'i' is intentional (brand quirk)
     var body: some View {
         HStack(spacing: 4) {
-            Text("tiny")
+            Text("TiNY")
                 .font(.system(size: fontSize, weight: .bold, design: .serif))
                 .foregroundColor(Color("Radish"))
-            Text("food")
+            Text("FOOD")
                 .font(.system(size: fontSize, weight: .bold, design: .serif))
                 .foregroundColor(Color("Yolk"))
-            Text("tour")
+            Text("TOUR")
                 .font(.system(size: fontSize, weight: .bold, design: .serif))
                 .foregroundColor(Color("Radish"))
         }
