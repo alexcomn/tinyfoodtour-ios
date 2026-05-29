@@ -169,7 +169,8 @@ struct StopDetailView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(stop.name)
                             .font(.system(size: 22, weight: .bold, design: .serif))
-                        Text(stop.cuisine_type + " · " + String(repeating: "$", count: max(1, stop.price_level)))
+                        Text([stop.cuisine_type, stop.price_level.map { String(repeating: "$", count: max(1, $0)) }]
+                        .compactMap { $0 }.joined(separator: " · "))
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                     }
@@ -193,26 +194,30 @@ struct StopDetailView: View {
 
             // Walk time + address
             VStack(alignment: .leading, spacing: 4) {
-                if stop.walk_time_from_previous != "Starting point" {
+                if let walkTime = stop.walk_time_from_previous, walkTime != "Starting point" {
                     HStack(spacing: 4) {
                         Image(systemName: "figure.walk")
                             .font(.system(size: 12))
-                        Text(stop.walk_time_from_previous)
+                        Text(walkTime)
                             .font(.system(size: 13))
                     }
                     .foregroundColor(.secondary)
                 }
-                Text(stop.address)
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+                if let addr = stop.address {
+                    Text(addr)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
             }
             .padding(.horizontal, 20)
 
             // Description
-            Text(stop.description)
-                .font(.system(size: 15))
-                .lineSpacing(4)
-                .padding(.horizontal, 20)
+            if let desc = stop.description {
+                Text(desc)
+                    .font(.system(size: 15))
+                    .lineSpacing(4)
+                    .padding(.horizontal, 20)
+            }
 
             // Action links
             HStack(spacing: 16) {
@@ -224,7 +229,7 @@ struct StopDetailView: View {
                             .foregroundColor(Color("Radish"))
                     }
                 }
-                if !stop.website_url.isEmpty, let url = URL(string: stop.website_url) {
+                if let websiteUrl = stop.website_url, !websiteUrl.isEmpty, let url = URL(string: websiteUrl) {
                     Link(destination: url) {
                         Label("Menu", systemImage: "menucard")
                             .font(.system(size: 13, weight: .medium))
@@ -286,7 +291,7 @@ struct StopDetailView: View {
                             .font(.system(size: 13))
                             .foregroundColor(Color("Radish"))
                     }
-                    .onChange(of: photoItem) { item in
+                    .onChange(of: photoItem) { _, item in
                         guard let item else { return }
                         Task {
                             if let data = try? await item.loadTransferable(type: Data.self) {
@@ -326,7 +331,7 @@ struct StopDetailView: View {
     }
 
     private func makeGoogleMapsURL(for stop: TourStop) -> String? {
-        let q = (stop.name + " " + stop.address)
+        let q = (stop.name + " " + (stop.address ?? ""))
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         return "https://maps.google.com/?q=\(q)"
     }
@@ -339,16 +344,30 @@ struct MiniMapView: View {
 
     init(stop: TourStop) {
         self.stop = stop
+        let coord = CLLocationCoordinate2D(
+            latitude: stop.lat ?? 47.6,
+            longitude: stop.lng ?? -122.33
+        )
         _region = State(initialValue: MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lng),
+            center: coord,
             span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
         ))
     }
 
     var body: some View {
-        Map(coordinateRegion: $region, annotationItems: [stop]) { s in
-            MapMarker(coordinate: CLLocationCoordinate2D(latitude: s.lat, longitude: s.lng),
-                      tint: Color("Radish"))
+        if stop.lat != nil && stop.lng != nil {
+            Map(position: .constant(.region(region))) {
+                Marker(stop.name, coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!))
+                    .tint(Color("Radish"))
+            }
+        } else {
+            Rectangle()
+                .fill(Color(.secondarySystemBackground))
+                .overlay(
+                    Text("No map available")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                )
         }
     }
 }

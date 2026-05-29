@@ -119,7 +119,7 @@ final class LiveTourViewModel: ObservableObject {
                     "place_id": stop.place_id,
                     "restaurant_name": stop.name,
                     "neighborhood": tour?.neighborhood ?? "",
-                    "cuisine_type": stop.cuisine_type,
+                    "cuisine_type": stop.cuisine_type ?? "",
                     "is_favorite": favorites.contains(stop.place_id),
                     "tour_id": tourId
                 ],

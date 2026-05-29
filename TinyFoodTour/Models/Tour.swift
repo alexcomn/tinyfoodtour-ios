@@ -6,17 +6,17 @@ struct TourStop: Codable, Identifiable {
     let stop_type: String
     let place_id: String
     let name: String
-    let address: String
-    let lat: Double
-    let lng: Double
-    let cuisine_type: String
+    let address: String?
+    let lat: Double?
+    let lng: Double?
+    let cuisine_type: String?
     let cuisine_label: String?
-    let price_level: Int
-    let website_url: String
+    let price_level: Int?
+    let website_url: String?
     let menu_url: String?
     let google_maps_url: String?
-    let description: String
-    let walk_time_from_previous: String
+    let description: String?
+    let walk_time_from_previous: String?
     let rating: Double?
     let photos: [String]?
     let opening_hours: [String]?

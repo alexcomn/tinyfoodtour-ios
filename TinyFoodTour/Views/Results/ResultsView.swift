@@ -116,16 +116,17 @@ struct StopCard: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.primary)
 
-                    Text(stop.cuisine_type + " · " + String(repeating: "$", count: max(1, stop.price_level)))
+                    Text([stop.cuisine_type, stop.price_level.map { String(repeating: "$", count: max(1, $0)) }]
+                        .compactMap { $0 }.joined(separator: " · "))
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                 }
                 Spacer()
-                if stop.walk_time_from_previous != "Starting point" {
+                if let walkTime = stop.walk_time_from_previous, walkTime != "Starting point" {
                     HStack(spacing: 3) {
                         Image(systemName: "figure.walk")
                             .font(.system(size: 11))
-                        Text(stop.walk_time_from_previous)
+                        Text(walkTime)
                             .font(.system(size: 11))
                     }
                     .foregroundColor(.secondary)
@@ -133,17 +134,21 @@ struct StopCard: View {
                 }
             }
 
-            Text(stop.description)
-                .font(.system(size: 14))
-                .foregroundColor(.primary.opacity(0.8))
-                .lineSpacing(3)
+            if let desc = stop.description {
+                Text(desc)
+                    .font(.system(size: 14))
+                    .foregroundColor(.primary.opacity(0.8))
+                    .lineSpacing(3)
+            }
 
-            Text(stop.address)
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
+            if let addr = stop.address {
+                Text(addr)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+            }
 
             HStack(spacing: 12) {
-                if !stop.website_url.isEmpty, let url = URL(string: stop.website_url) {
+                if let websiteUrl = stop.website_url, !websiteUrl.isEmpty, let url = URL(string: websiteUrl) {
                     Link(destination: url) {
                         Label("Website", systemImage: "safari")
                             .font(.system(size: 12))
@@ -170,7 +175,8 @@ struct StopCard: View {
     }
 
     private func googleMapsURL(for stop: TourStop) -> String? {
-        let q = (stop.name + " " + stop.address).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let q = (stop.name + " " + (stop.address ?? ""))
+            .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         return "https://maps.google.com/?q=\(q)"
     }
 }
@@ -183,12 +189,16 @@ struct TourMapView: View {
 
     init(stops: [TourStop]) {
         self.stops = stops
-        let center = stops.isEmpty
-            ? CLLocationCoordinate2D(latitude: 47.6, longitude: -122.33)
-            : CLLocationCoordinate2D(
-                latitude: stops.map { $0.lat }.reduce(0, +) / Double(stops.count),
-                longitude: stops.map { $0.lng }.reduce(0, +) / Double(stops.count)
+        let locatedStops = stops.filter { $0.lat != nil && $0.lng != nil }
+        let center: CLLocationCoordinate2D
+        if locatedStops.isEmpty {
+            center = CLLocationCoordinate2D(latitude: 47.6, longitude: -122.33)
+        } else {
+            center = CLLocationCoordinate2D(
+                latitude: locatedStops.map { $0.lat! }.reduce(0, +) / Double(locatedStops.count),
+                longitude: locatedStops.map { $0.lng! }.reduce(0, +) / Double(locatedStops.count)
             )
+        }
         _region = State(initialValue: MKCoordinateRegion(
             center: center,
             span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
@@ -196,12 +206,15 @@ struct TourMapView: View {
     }
 
     var body: some View {
-        Map(coordinateRegion: $region, annotationItems: stops) { stop in
-            MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: stop.lat, longitude: stop.lng)) {
-                Circle()
-                    .fill(StopLabel.color(index: (stop.stop_number - 1), total: stops.count))
-                    .frame(width: 10, height: 10)
-                    .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+        let locatedStops = stops.filter { $0.lat != nil && $0.lng != nil }
+        Map(position: .constant(.region(region))) {
+            ForEach(locatedStops) { stop in
+                Annotation("", coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!)) {
+                    Circle()
+                        .fill(StopLabel.color(index: (stop.stop_number - 1), total: stops.count))
+                        .frame(width: 10, height: 10)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 1.5))
+                }
             }
         }
     }
