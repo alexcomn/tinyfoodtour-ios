@@ -12,6 +12,8 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     // Hero — PizzaCrust bg, matches web HomeHero layout
+                    // Note: the ScrollView background is set to PizzaCrust below so
+                    // the top safe area is also filled (no white bleed on overscroll)
                     VStack(alignment: .leading, spacing: 0) {
                         BrandMarkView(fontSize: 11)
                             .padding(.top, 52)
@@ -93,6 +95,7 @@ struct HomeView: View {
                     }
                 }
             }
+            .background(Color("PizzaCrust"))  // fills top overscroll area
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $showQuiz) {
                 QuizView()
