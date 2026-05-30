@@ -81,7 +81,7 @@ final class QuizViewModel: ObservableObject {
         case "vibe": return !answers.vibe.isEmpty
         case "cuisines", "cuisines_breakfast", "drink_cravings", "dessert_type", "cafe_atmosphere":
             return !answers.cuisines.isEmpty
-        case "dietary": return !answers.dietary.isEmpty
+        case "dietary": return !answers.dietary.isEmpty  // multi_select: need ≥1
         case "budget": return !answers.budget.isEmpty
         case "walk_distance": return !answers.walkDistance.isEmpty
         default: return false
@@ -241,7 +241,12 @@ final class QuizViewModel: ObservableObject {
                 answers.cuisines = [option]
             }
         case "dietary":
-            answers.dietary = option
+            // Dietary is multi_select in quiz_tree — toggle membership
+            if answers.dietary.contains(option) {
+                answers.dietary.removeAll { $0 == option }
+            } else {
+                answers.dietary.append(option)
+            }
         case "budget":
             answers.budget = option
         case "walk_distance":
@@ -258,7 +263,7 @@ final class QuizViewModel: ObservableObject {
         case "vibe": return answers.vibe.contains(option)
         case "cuisines", "cuisines_breakfast", "drink_cravings", "dessert_type", "cafe_atmosphere":
             return answers.cuisines.contains(option)
-        case "dietary": return answers.dietary == option
+        case "dietary": return answers.dietary.contains(option)
         case "budget": return answers.budget == option
         case "walk_distance": return answers.walkDistance == option
         default: return false

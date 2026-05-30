@@ -35,7 +35,7 @@ final class TourViewModel: ObservableObject {
         var body: [String: Any] = [
             "neighborhood": answers.neighborhood,
             "vibe": answers.vibe,
-            "dietary": [answers.dietary].filter { !$0.isEmpty },
+            "dietary": answers.dietary,
             "walk_distance": answers.walkDistance,
         ]
         if let lat = answers.lat, let lng = answers.lng {

@@ -142,7 +142,7 @@ struct QuizAnswers {
     var lng: Double?
     var vibe: [String] = []
     var cuisines: [String] = []
-    var dietary: String = ""
+    var dietary: [String] = []
     var budget: String = ""
     var walkDistance: String = ""
     var excludePlaceIds: [String] = []
