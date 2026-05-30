@@ -190,7 +190,14 @@ struct StopDetailView: View {
     let onUploadPhoto: (Data) -> Void
 
     @State private var photoItem: PhotosPickerItem?
+    @State private var showMenu = false
     @State private var showDirections = false
+
+    private var menuURLString: String? {
+        if let m = stop.menu_url, !m.isEmpty { return m }
+        if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return w }
+        return nil
+    }
 
     var stopColor: Color { StopLabel.color(index: index) }
     var label: String { StopLabel.label(index: index, total: total) }
@@ -268,11 +275,17 @@ struct StopDetailView: View {
                             .foregroundColor(Color("Radish"))
                     }
                 }
-                if let websiteUrl = stop.website_url, !websiteUrl.isEmpty, let url = URL(string: websiteUrl) {
-                    Link(destination: url) {
+                if menuURLString != nil {
+                    Button {
+                        showMenu = true
+                    } label: {
                         Label("Menu", systemImage: "menucard")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Color("Radish"))
+                    }
+                    .buttonStyle(.plain)
+                    .sheet(isPresented: $showMenu) {
+                        MenuViewerSheet(url: menuURLString!, restaurantName: stop.name)
                     }
                 }
             }

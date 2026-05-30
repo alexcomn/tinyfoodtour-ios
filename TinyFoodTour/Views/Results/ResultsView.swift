@@ -41,15 +41,16 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
+        ScrollView(.vertical) {
+            LazyVStack(spacing: 0, pinnedViews: []) {
                 header
                 mapSection
                 stopList
                 actionBar
             }
-            .frame(maxWidth: .infinity)  // required for ScrollView to compute content height
+            .frame(maxWidth: .infinity)
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
@@ -225,6 +226,7 @@ struct ResultsView: View {
 
 // MARK: - Stop card
 struct StopCard: View {
+    @State private var showMenu = false
     let stop: TourStop
     let index: Int
     let total: Int
@@ -391,16 +393,15 @@ struct StopCard: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
 
-            HStack(alignment: .bottom, spacing: 12) {
+            // Description full-width, buttons below — matches web layout
+            VStack(alignment: .leading, spacing: 10) {
                 if let desc = stop.description, !desc.isEmpty {
                     Text(desc)
                         .font(.system(size: 12))
                         .foregroundColor(Color("SlateMid"))
                         .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
                 linkButton(for: stop)
             }
             .padding(.horizontal, 16)
@@ -415,6 +416,17 @@ struct StopCard: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(stopLabel): \(stop.name). \(cuisineDisplay)\(priceDisplay.isEmpty ? "" : ", \(priceDisplay)").")
+        .sheet(isPresented: $showMenu) {
+            if let url = menuURLString {
+                MenuViewerSheet(url: url, restaurantName: stop.name)
+            }
+        }
+    }
+
+    private var menuURLString: String? {
+        if let m = stop.menu_url, !m.isEmpty { return m }
+        if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return w }
+        return nil
     }
 
     // Always shows at least Directions. Shows menu/website when available.
@@ -430,26 +442,34 @@ struct StopCard: View {
             ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!
 
         HStack(spacing: 8) {
-            if let url = menuURL {
-                outlineLink(label: "View menu →", url: url)
+            // "View menu →" opens in-app MenuViewerSheet
+            if menuURLString != nil {
+                Button {
+                    showMenu = true
+                } label: {
+                    outlineLinkLabel("View menu →")
+                }
+                .buttonStyle(.plain)
             }
-            outlineLink(label: "Directions →", url: mapsURL)
+            // "Directions →" always opens Maps
+            Link(destination: mapsURL) {
+                outlineLinkLabel("Directions →")
+            }
+            .fixedSize()
         }
     }
 
-    private func outlineLink(label: String, url: URL) -> some View {
-        Link(destination: url) {
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundColor(Color("TFTSlate"))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
-                )
-        }
-        .fixedSize()
+    private func outlineLinkLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11))
+            .foregroundColor(Color("TFTSlate"))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+            )
+            .fixedSize()
     }
 }
 
