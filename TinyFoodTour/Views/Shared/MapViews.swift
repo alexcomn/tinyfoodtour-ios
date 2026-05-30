@@ -11,138 +11,132 @@ struct RouteSnapshotView: View {
     @State private var isLoading = true
 
     var body: some View {
-        ZStack {
-            if let img = snapshot {
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFill()
-            } else {
-                Color("CreamDark")
-                if isLoading {
-                    ProgressView().tint(Color("SlateMid"))
+        GeometryReader { geo in
+            ZStack {
+                if let img = snapshot {
+                    Image(uiImage: img)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                } else {
+                    Color("CreamDark")
+                    if isLoading {
+                        ProgressView().tint(Color("SlateMid"))
+                    }
                 }
             }
-        }
-        .task(id: stops.map(\.place_id).joined()) {
-            await render()
+            .frame(width: geo.size.width, height: geo.size.height)
+            .task(id: stops.map(\.place_id).joined() + "\(geo.size.width)") {
+                await render(width: geo.size.width, height: geo.size.height)
+            }
         }
     }
 
-    private func render() async {
+    private func render(width: CGFloat, height: CGFloat) async {
+        guard width > 0, height > 0 else { return }
         let located = stops.filter { $0.lat != nil && $0.lng != nil }
         guard !located.isEmpty else { isLoading = false; return }
 
+        let scale = UIScreen.main.scale
         let options = MKMapSnapshotter.Options()
-        // Render at 2× the display size for crisp retina
-        let scale: CGFloat = UIScreen.main.scale
-        options.size = CGSize(width: 700, height: 280)
+        options.size = CGSize(width: width, height: height)
         options.scale = scale
         options.mapType = .standard
 
-        // Fit region to stops, matching web's fitBounds approach
+        // Fit region to all stops with padding — mirrors web fitBounds
         let lats = located.map { $0.lat! }
         let lngs = located.map { $0.lng! }
-        let latSpan = max(0.006, (lats.max()! - lats.min()!) * 1.6)
-        let lngSpan = max(0.006, (lngs.max()! - lngs.min()!) * 1.6)
-        let center  = CLLocationCoordinate2D(
-            latitude:  (lats.min()! + lats.max()!) / 2,
-            longitude: (lngs.min()! + lngs.max()!) / 2
+        let spread = (
+            lat: lats.max()! - lats.min()!,
+            lng: lngs.max()! - lngs.min()!
         )
+        // Single stop: show ~400m radius. Multi-stop: fit with 70% padding.
+        let latSpan = spread.lat < 0.001 ? 0.008 : spread.lat * 1.7
+        let lngSpan = spread.lng < 0.001 ? 0.008 : spread.lng * 1.7
         options.region = MKCoordinateRegion(
-            center: center,
-            span:   MKCoordinateSpan(latitudeDelta: latSpan, longitudeDelta: lngSpan)
+            center: CLLocationCoordinate2D(
+                latitude:  (lats.min()! + lats.max()!) / 2,
+                longitude: (lngs.min()! + lngs.max()!) / 2
+            ),
+            span: MKCoordinateSpan(latitudeDelta: latSpan, longitudeDelta: lngSpan)
         )
 
         guard let snap = try? await MKMapSnapshotter(options: options).start() else {
             isLoading = false; return
         }
 
-        // Draw markers on the snapshot image
-        let size = options.size
-        let rendered = UIGraphicsImageRenderer(size: size, format: {
-            let f = UIGraphicsImageRendererFormat()
-            f.scale = scale
-            return f
-        }()).image { _ in
+        let renderSize = CGSize(width: width, height: height)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = scale
+        let rendered = UIGraphicsImageRenderer(size: renderSize, format: format).image { _ in
             snap.image.draw(at: .zero)
-            drawMarkers(snap: snap, stops: located, size: size)
+            drawRoute(snap: snap, stops: located, size: renderSize)
         }
-        await MainActor.run {
-            snapshot = rendered
-            isLoading = false
-        }
+        await MainActor.run { snapshot = rendered; isLoading = false }
     }
 
-    private func drawMarkers(snap: MKMapSnapshotter.Snapshot, stops: [TourStop], size: CGSize) {
-        let stopColors: [UIColor] = [
-            UIColor(red: 0.769, green: 0.020, blue: 0.020, alpha: 1), // #c40505
-            UIColor(red: 0.400, green: 0.392, blue: 0.161, alpha: 1), // #666429
-            UIColor(red: 0.329, green: 0.012, blue: 0.012, alpha: 1), // #540303
-            UIColor(red: 0.588, green: 0.710, blue: 0.086, alpha: 1), // #96b516
-            UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 1), // #9b193d
-        ]
-
-        for (i, stop) in stops.enumerated() {
+    // Draws dashed burgundy polyline then numbered markers — matches web TourMap
+    private func drawRoute(snap: MKMapSnapshotter.Snapshot, stops: [TourStop], size: CGSize) {
+        let bounds = CGRect(origin: .zero, size: size)
+        let points = stops.compactMap { stop -> CGPoint? in
+            guard stop.lat != nil, stop.lng != nil else { return nil }
             let pt = snap.point(for: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!))
-            guard CGRect(origin: .zero, size: size).contains(pt) else { continue }
+            return bounds.contains(pt) ? pt : nil
+        }
 
+        // Dashed polyline — color #9b193d, matching web's burgundy route
+        if points.count > 1 {
+            let path = UIBezierPath()
+            path.move(to: points[0])
+            for pt in points.dropFirst() { path.addLine(to: pt) }
+            path.lineWidth = 2.5
+            path.setLineDash([6, 5], count: 2, phase: 0)
+            UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 0.8).setStroke()
+            path.stroke()
+        }
+
+        // Numbered circle markers
+        let stopColors: [UIColor] = [
+            UIColor(red: 0.769, green: 0.020, blue: 0.020, alpha: 1),
+            UIColor(red: 0.400, green: 0.392, blue: 0.161, alpha: 1),
+            UIColor(red: 0.329, green: 0.012, blue: 0.012, alpha: 1),
+            UIColor(red: 0.588, green: 0.710, blue: 0.086, alpha: 1),
+            UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 1),
+        ]
+        for (i, pt) in points.enumerated() {
             let isCurrent = highlightedIndex == i
-            let radius: CGFloat = isCurrent ? 14 : 11
-            let color = stopColors[i % stopColors.count]
-
-            // White ring
-            let ringRect = CGRect(x: pt.x - radius - 2, y: pt.y - radius - 2,
-                                  width: (radius + 2) * 2, height: (radius + 2) * 2)
+            let r: CGFloat = isCurrent ? 13 : 10
+            // White border
             UIColor.white.setFill()
-            UIBezierPath(ovalIn: ringRect).fill()
-
+            UIBezierPath(ovalIn: CGRect(x: pt.x-r-2, y: pt.y-r-2, width: (r+2)*2, height: (r+2)*2)).fill()
             // Coloured fill
-            let dotRect = CGRect(x: pt.x - radius, y: pt.y - radius,
-                                 width: radius * 2, height: radius * 2)
-            color.setFill()
-            UIBezierPath(ovalIn: dotRect).fill()
-
-            // Number label
+            stopColors[i % stopColors.count].setFill()
+            UIBezierPath(ovalIn: CGRect(x: pt.x-r, y: pt.y-r, width: r*2, height: r*2)).fill()
+            // Label
             let label = String(format: "%02d", i + 1)
-            let fontSize: CGFloat = isCurrent ? 10 : 8
+            let fs: CGFloat = isCurrent ? 10 : 8
             let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: fontSize, weight: .bold),
+                .font: UIFont.systemFont(ofSize: fs, weight: .bold),
                 .foregroundColor: UIColor.white
             ]
-            let textSize = (label as NSString).size(withAttributes: attrs)
-            let textRect = CGRect(
-                x: pt.x - textSize.width / 2,
-                y: pt.y - textSize.height / 2,
-                width: textSize.width, height: textSize.height
+            let ts = (label as NSString).size(withAttributes: attrs)
+            (label as NSString).draw(
+                in: CGRect(x: pt.x-ts.width/2, y: pt.y-ts.height/2, width: ts.width, height: ts.height),
+                withAttributes: attrs
             )
-            (label as NSString).draw(in: textRect, withAttributes: attrs)
         }
     }
 }
 
-// MARK: - TourMapView (kept as alias for backward compat)
+// MARK: - TourMapView alias
 typealias TourMapView = RouteSnapshotView
 
-// MARK: - MiniMapView (single-stop map in Live Tour, non-interactive)
+// MARK: - MiniMapView (full route in Live Tour)
 struct MiniMapView: View {
     let stop: TourStop
     let allStops: [TourStop]
     let currentIndex: Int
-
-    @State private var region: MKCoordinateRegion
-
-    init(stop: TourStop, allStops: [TourStop], currentIndex: Int) {
-        self.stop = stop
-        self.allStops = allStops
-        self.currentIndex = currentIndex
-        _region = State(initialValue: MKCoordinateRegion(
-            center: CLLocationCoordinate2D(
-                latitude: stop.lat ?? 47.6,
-                longitude: stop.lng ?? -122.33
-            ),
-            span: MKCoordinateSpan(latitudeDelta: 0.006, longitudeDelta: 0.006)
-        ))
-    }
 
     var body: some View {
         RouteSnapshotView(stops: allStops, highlightedIndex: currentIndex)

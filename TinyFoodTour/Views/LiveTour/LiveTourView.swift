@@ -37,11 +37,23 @@ struct LiveTourView: View {
         .darkStatusBar()
         .sheet(isPresented: $vm.showCompletionCard) {
             if let tour = vm.tour {
-                CompletionCardView(tour: tour) {
-                    // Pop back through the nav stack to Home, then launch quiz
-                    NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
-                }
+                CompletionCardView(
+                    tour: tour,
+                    onBuildAnother: {
+                        // Dismiss this view first, then cascade up to HomeView
+                        dismiss()
+                        NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
+                    },
+                    onReviewStops: {
+                        // Pop back to ResultsView so user can review all stop cards
+                        dismiss()
+                    }
+                )
             }
+        }
+        // When "Build another tour" fires, this view also dismisses itself
+        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            dismiss()
         }
         .task {
             await vm.load(tourId: tourId, userId: authVM.currentUser?.id)
@@ -371,6 +383,7 @@ struct StopDetailView: View {
 struct CompletionCardView: View {
     let tour: Tour
     var onBuildAnother: (() -> Void)? = nil
+    var onReviewStops: (() -> Void)? = nil
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -401,8 +414,11 @@ struct CompletionCardView: View {
             .buttonStyle(.plain)
             .padding(.horizontal, 32)
             .padding(.top, 4)
-            // Secondary: review tour stops
-            Button("Review your stops") { dismiss() }
+            // Secondary: go back to Results to review all stop cards
+            Button("Review your stops") {
+                dismiss()
+                onReviewStops?()
+            }
                 .font(.system(size: 14))
                 .foregroundColor(Color("SlateMid"))
             Spacer()

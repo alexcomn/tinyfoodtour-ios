@@ -11,6 +11,7 @@ struct ResultsView: View {
     let generationParams: QuizAnswers?
 
     @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.dismiss) var dismiss
     @StateObject private var savedVM = SavedToursViewModel()
     @State private var navigateToLive = false
     @State private var isSaved = false
@@ -47,10 +48,15 @@ struct ResultsView: View {
                 stopList
                 actionBar
             }
+            .frame(maxWidth: .infinity)  // required for ScrollView to compute content height
         }
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
+        // Cascade dismiss — lets "Build another tour" pop the full nav stack
+        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            dismiss()
+        }
         .navigationDestination(isPresented: $navigateToLive) {
             LiveTourView(tourId: tour.id)
                 .environmentObject(authVM)
@@ -84,10 +90,12 @@ struct ResultsView: View {
     // MARK: - Map
     private var mapSection: some View {
         RouteSnapshotView(stops: stops)
-            .frame(height: 180)
+            .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
             .background(Color("PizzaCrust"))
+            .frame(maxWidth: .infinity)
     }
 
     // MARK: - Stop cards
@@ -389,6 +397,7 @@ struct StopCard: View {
         .accessibilityLabel("\(stopLabel): \(stop.name). \(cuisineDisplay)\(priceDisplay.isEmpty ? "" : ", \(priceDisplay)").")
     }
 
+    // Always shows at least Directions. Shows menu/website when available.
     @ViewBuilder
     private func linkButton(for stop: TourStop) -> some View {
         let menuURL: URL? = {
@@ -396,36 +405,31 @@ struct StopCard: View {
             if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return URL(string: w) }
             return nil
         }()
-        let mapsURL: URL? = stop.google_maps_url.flatMap(URL.init)
-            ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")
+        // Directions: prefer google_maps_url, fall back to search by name+address
+        let mapsURL: URL = stop.google_maps_url.flatMap(URL.init)
+            ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!
 
-        if let url = menuURL {
-            Link(destination: url) {
-                Text("View menu →")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color("TFTSlate"))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.primary.opacity(0.2), lineWidth: 1)
-                    )
+        HStack(spacing: 8) {
+            if let url = menuURL {
+                outlineLink(label: "View menu →", url: url)
             }
-            .fixedSize()
-        } else if let url = mapsURL {
-            Link(destination: url) {
-                Text("Directions →")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color("TFTSlate"))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.primary.opacity(0.2), lineWidth: 1)
-                    )
-            }
-            .fixedSize()
+            outlineLink(label: "Directions →", url: mapsURL)
         }
+    }
+
+    private func outlineLink(label: String, url: URL) -> some View {
+        Link(destination: url) {
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundColor(Color("TFTSlate"))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+                )
+        }
+        .fixedSize()
     }
 }
 

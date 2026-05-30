@@ -18,6 +18,9 @@ struct QuizView: View {
         }
         .navigationBarBackButtonHidden(true)
         .darkStatusBar()
+        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            dismiss()
+        }
         .navigationDestination(isPresented: $navigateToGenerating) {
             GeneratingView(answers: vm.answers)
         }
