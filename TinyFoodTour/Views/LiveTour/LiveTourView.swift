@@ -79,6 +79,7 @@ struct LiveTourView: View {
                         allStops: tour.stops,
                         index: vm.currentStopIndex,
                         total: tour.stops.count,
+                        completedIndices: Set(vm.progress.indices.filter { vm.progress[$0].completed }),
                         progress: vm.currentProgress,
                         noteText: $vm.noteText,
                         isFavorite: vm.favorites.contains(stop.place_id),
@@ -179,6 +180,7 @@ struct StopDetailView: View {
     let allStops: [TourStop]
     let index: Int
     let total: Int
+    let completedIndices: Set<Int>
     let progress: StopProgress
     @Binding var noteText: String
     let isFavorite: Bool
@@ -193,10 +195,11 @@ struct StopDetailView: View {
     @State private var showMenu = false
     @State private var showDirections = false
 
-    private var menuURLString: String? {
+    private var menuURLString: String {
         if let m = stop.menu_url, !m.isEmpty { return m }
         if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return w }
-        return nil
+        let q = "\(stop.name) menu".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return "https://www.google.com/search?q=\(q)"
     }
 
     var stopColor: Color { StopLabel.color(index: index) }
@@ -233,7 +236,8 @@ struct StopDetailView: View {
             .padding(.top, 16)
 
             // Route map — shows all stops, highlights current
-            MiniMapView(stop: stop, allStops: allStops, currentIndex: index)
+            MiniMapView(stop: stop, allStops: allStops, currentIndex: index,
+                       completedIndices: completedIndices)
                 .frame(height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding(.horizontal, 20)
@@ -275,18 +279,16 @@ struct StopDetailView: View {
                             .foregroundColor(Color("Radish"))
                     }
                 }
-                if menuURLString != nil {
-                    Button {
-                        showMenu = true
-                    } label: {
-                        Label("Menu", systemImage: "menucard")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(Color("Radish"))
-                    }
-                    .buttonStyle(.plain)
-                    .sheet(isPresented: $showMenu) {
-                        MenuViewerSheet(url: menuURLString!, restaurantName: stop.name)
-                    }
+                Button {
+                    showMenu = true
+                } label: {
+                    Label("Menu", systemImage: "menucard")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color("Radish"))
+                }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showMenu) {
+                    MenuViewerSheet(url: menuURLString, restaurantName: stop.name)
                 }
             }
             .padding(.horizontal, 20)

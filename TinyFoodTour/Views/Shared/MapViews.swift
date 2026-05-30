@@ -6,7 +6,8 @@ import MapKit
 // Used on Results screen and as the "full route" view in Live Tour.
 struct RouteSnapshotView: View {
     let stops: [TourStop]
-    var highlightedIndex: Int? = nil   // Live Tour: marks current stop larger
+    var highlightedIndex: Int? = nil       // Live Tour: current stop (larger)
+    var completedIndices: Set<Int> = []    // Live Tour: draw ✓ on completed
     @State private var snapshot: UIImage?
     @State private var isLoading = true
 
@@ -27,7 +28,7 @@ struct RouteSnapshotView: View {
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
-            .task(id: stops.map(\.place_id).joined() + "\(geo.size.width)") {
+            .task(id: stops.map(\.place_id).joined() + "\(geo.size.width)-\(completedIndices.sorted().map(String.init).joined())") {
                 await render(width: geo.size.width, height: geo.size.height)
             }
         }
@@ -106,16 +107,23 @@ struct RouteSnapshotView: View {
         ]
         for (i, pt) in points.enumerated() {
             let isCurrent = highlightedIndex == i
+            let isCompleted = completedIndices.contains(i)
             let r: CGFloat = isCurrent ? 13 : 10
-            // White border
+
+            // White border ring
             UIColor.white.setFill()
             UIBezierPath(ovalIn: CGRect(x: pt.x-r-2, y: pt.y-r-2, width: (r+2)*2, height: (r+2)*2)).fill()
-            // Coloured fill
-            stopColors[i % stopColors.count].setFill()
+
+            // Fill: green for completed, brand color otherwise
+            let fillColor = isCompleted
+                ? UIColor(red: 0.133, green: 0.773, blue: 0.369, alpha: 1)  // #22C55E green
+                : stopColors[i % stopColors.count]
+            fillColor.setFill()
             UIBezierPath(ovalIn: CGRect(x: pt.x-r, y: pt.y-r, width: r*2, height: r*2)).fill()
-            // Label
-            let label = String(format: "%02d", i + 1)
-            let fs: CGFloat = isCurrent ? 10 : 8
+
+            // Label: ✓ for completed, zero-padded number otherwise
+            let label = isCompleted ? "✓" : String(format: "%02d", i + 1)
+            let fs: CGFloat = isCompleted ? (isCurrent ? 12 : 9) : (isCurrent ? 10 : 8)
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: fs, weight: .bold),
                 .foregroundColor: UIColor.white
@@ -137,8 +145,13 @@ struct MiniMapView: View {
     let stop: TourStop
     let allStops: [TourStop]
     let currentIndex: Int
+    var completedIndices: Set<Int> = []
 
     var body: some View {
-        RouteSnapshotView(stops: allStops, highlightedIndex: currentIndex)
+        RouteSnapshotView(
+            stops: allStops,
+            highlightedIndex: currentIndex,
+            completedIndices: completedIndices
+        )
     }
 }

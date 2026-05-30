@@ -107,7 +107,7 @@ struct ResultsView: View {
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 20)
-        .background(Color("PizzaCrust"))
+        .background(Color("Cream"))
     }
 
     // MARK: - Map
@@ -117,7 +117,7 @@ struct ResultsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color("PizzaCrust"))
+            .background(Color("Cream"))
             .frame(maxWidth: .infinity)
     }
 
@@ -525,16 +525,18 @@ struct StopCard: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(stopLabel): \(stop.name). \(cuisineDisplay)\(priceDisplay.isEmpty ? "" : ", \(priceDisplay)").")
         .sheet(isPresented: $showMenu) {
-            if let url = menuURLString {
-                MenuViewerSheet(url: url, restaurantName: stop.name)
-            }
+            MenuViewerSheet(url: menuURLString, restaurantName: stop.name)
         }
     }
 
-    private var menuURLString: String? {
+    // Always returns a URL for the menu viewer — prefers menu_url, then
+    // website_url, then falls back to a Google search so the button is
+    // always visible and the viewer shows a graceful error/fallback.
+    private var menuURLString: String {
         if let m = stop.menu_url, !m.isEmpty { return m }
         if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return w }
-        return nil
+        let q = "\(stop.name) menu".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return "https://www.google.com/search?q=\(q)"
     }
 
     // Always shows at least Directions. Shows menu/website when available.
@@ -550,15 +552,13 @@ struct StopCard: View {
             ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!
 
         HStack(spacing: 8) {
-            // "View menu →" opens in-app MenuViewerSheet
-            if menuURLString != nil {
-                Button {
-                    showMenu = true
-                } label: {
-                    outlineLinkLabel("View menu →")
-                }
-                .buttonStyle(.plain)
+            // "View menu →" always visible — opens in-app MenuViewerSheet
+            Button {
+                showMenu = true
+            } label: {
+                outlineLinkLabel("View menu →")
             }
+            .buttonStyle(.plain)
             // "Directions →" always opens Maps
             Link(destination: mapsURL) {
                 outlineLinkLabel("Directions →")
