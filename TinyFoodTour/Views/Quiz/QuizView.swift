@@ -148,7 +148,7 @@ struct QuizView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
         .background(
-            Color(.systemBackground)
+            Color("Cream")
                 .shadow(color: .black.opacity(0.06), radius: 8, y: -2)
                 .ignoresSafeArea(edges: .bottom)
         )
