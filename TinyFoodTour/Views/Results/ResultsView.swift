@@ -83,7 +83,7 @@ struct ResultsView: View {
 
     // MARK: - Map
     private var mapSection: some View {
-        TourMapView(stops: stops)
+        RouteSnapshotView(stops: stops)
             .frame(height: 180)
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -102,6 +102,7 @@ struct ResultsView: View {
                             stop: stop,
                             index: idx,
                             total: stops.count,
+                            vibes: currentTour.vibe,
                             isFirst: idx == 0,
                             isShuffling: shufflingIndex == idx,
                             onStartHere: { navigateToLive = true },
@@ -199,13 +200,14 @@ struct StopCard: View {
     let stop: TourStop
     let index: Int
     let total: Int
+    let vibes: [String]
     let isFirst: Bool
     let isShuffling: Bool
     let onStartHere: () -> Void
     let onShuffle: (() -> Void)?
 
     private var stopColor: Color { StopLabel.color(index: index) }
-    private var stopLabel: String { StopLabel.label(index: index, total: total) }
+    private var stopLabel: String { StopLabel.label(index: index, total: total, vibes: vibes) }
 
     // cuisine_label preferred; fall back to cleaned cuisine_type
     private var cuisineDisplay: String {
@@ -445,55 +447,7 @@ extension View {
     func flexibleShrink() -> some View { self }
 }
 
-// MARK: - Map
-struct TourMapView: View {
-    let stops: [TourStop]
-
-    @State private var position: MapCameraPosition
-
-    init(stops: [TourStop]) {
-        self.stops = stops
-        let located = stops.filter { $0.lat != nil && $0.lng != nil }
-        let center: CLLocationCoordinate2D
-        if located.isEmpty {
-            center = CLLocationCoordinate2D(latitude: 47.6, longitude: -122.33)
-        } else {
-            center = CLLocationCoordinate2D(
-                latitude: located.map { $0.lat! }.reduce(0, +) / Double(located.count),
-                longitude: located.map { $0.lng! }.reduce(0, +) / Double(located.count)
-            )
-        }
-        _position = State(initialValue: .region(MKCoordinateRegion(
-            center: center,
-            span: MKCoordinateSpan(latitudeDelta: 0.025, longitudeDelta: 0.025)
-        )))
-    }
-
-    var body: some View {
-        let located = stops.filter { $0.lat != nil && $0.lng != nil }
-        // .constant so the Map doesn't register pan gesture recognizers
-        // that compete with the parent ScrollView
-        Map(position: .constant(position)) {
-            ForEach(located) { stop in
-                Annotation("", coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!)) {
-                    ZStack {
-                        Circle()
-                            .fill(StopLabel.color(index: stop.stop_number - 1))
-                            .frame(width: 22, height: 22)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                        Text(String(format: "%02d", stop.stop_number))
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-            }
-        }
-        .mapStyle(.standard)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08), lineWidth: 1))
-        .allowsHitTesting(false)
-    }
-}
+// TourMapView is now RouteSnapshotView (defined in MapViews.swift)
 
 // MARK: - Preview
 #Preview {

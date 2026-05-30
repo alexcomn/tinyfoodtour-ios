@@ -115,11 +115,14 @@ struct HomeView: View {
         }
         .darkStatusBar()
         .onAppear {
-            // Reload each time home becomes visible so saves from ResultsView appear
             Task { await savedToursVM.load() }
         }
         .task {
             await savedToursVM.load()
+        }
+        // "Build another tour →" from CompletionCardView navigates straight to the quiz
+        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            showQuiz = true
         }
     }
 }

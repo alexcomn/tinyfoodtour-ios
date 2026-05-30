@@ -37,7 +37,10 @@ struct LiveTourView: View {
         .darkStatusBar()
         .sheet(isPresented: $vm.showCompletionCard) {
             if let tour = vm.tour {
-                CompletionCardView(tour: tour)
+                CompletionCardView(tour: tour) {
+                    // Pop back through the nav stack to Home, then launch quiz
+                    NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
+                }
             }
         }
         .task {
@@ -61,6 +64,7 @@ struct LiveTourView: View {
                 if let stop = vm.currentStop {
                     StopDetailView(
                         stop: stop,
+                        allStops: tour.stops,
                         index: vm.currentStopIndex,
                         total: tour.stops.count,
                         progress: vm.currentProgress,
@@ -160,6 +164,7 @@ struct LiveTourView: View {
 // MARK: - Individual stop detail
 struct StopDetailView: View {
     let stop: TourStop
+    let allStops: [TourStop]
     let index: Int
     let total: Int
     let progress: StopProgress
@@ -208,8 +213,8 @@ struct StopDetailView: View {
             .padding(.horizontal, 20)
             .padding(.top, 16)
 
-            // Mini map
-            MiniMapView(stop: stop)
+            // Route map — shows all stops, highlights current
+            MiniMapView(stop: stop, allStops: allStops, currentIndex: index)
                 .frame(height: 140)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .padding(.horizontal, 20)
@@ -360,44 +365,12 @@ struct StopDetailView: View {
     }
 }
 
-// MARK: - Mini map for a single stop
-struct MiniMapView: View {
-    let stop: TourStop
-    @State private var region: MKCoordinateRegion
-
-    init(stop: TourStop) {
-        self.stop = stop
-        let coord = CLLocationCoordinate2D(
-            latitude: stop.lat ?? 47.6,
-            longitude: stop.lng ?? -122.33
-        )
-        _region = State(initialValue: MKCoordinateRegion(
-            center: coord,
-            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-        ))
-    }
-
-    var body: some View {
-        if stop.lat != nil && stop.lng != nil {
-            Map(position: .constant(.region(region))) {
-                Marker(stop.name, coordinate: CLLocationCoordinate2D(latitude: stop.lat!, longitude: stop.lng!))
-                    .tint(Color("Radish"))
-            }
-        } else {
-            Rectangle()
-                .fill(Color(.secondarySystemBackground))
-                .overlay(
-                    Text("No map available")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                )
-        }
-    }
-}
+// MiniMapView is defined in MapViews.swift
 
 // MARK: - Completion card
 struct CompletionCardView: View {
     let tour: Tour
+    var onBuildAnother: (() -> Void)? = nil
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -412,14 +385,26 @@ struct CompletionCardView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            Button("Done") { dismiss() }
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 14)
-                .background(Color("Radish"))
-                .clipShape(Capsule())
-                .padding(.top, 8)
+            // Primary: build another tour
+            Button {
+                dismiss()
+                onBuildAnother?()
+            } label: {
+                Text("Build another tour →")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color("Primary"))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 32)
+            .padding(.top, 4)
+            // Secondary: review tour stops
+            Button("Review your stops") { dismiss() }
+                .font(.system(size: 14))
+                .foregroundColor(Color("SlateMid"))
             Spacer()
         }
         .presentationDetents([.medium])
