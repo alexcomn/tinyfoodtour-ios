@@ -188,13 +188,33 @@ struct ResultsView: View {
                 }
                 .buttonStyle(.plain)
 
-                Button {
-                    savedVM.saveTour(token: currentTour.share_token)
-                    isSaved = true
-                } label: {
-                    Label(isSaved ? "Saved!" : "Save tour", systemImage: isSaved ? "bookmark.fill" : "bookmark")
-                        .font(.system(size: 14))
-                        .foregroundColor(isSaved ? Color("Radish") : Color("SlateMid"))
+                // Share + Save row
+                HStack(spacing: 16) {
+                    // Save bookmark
+                    Button {
+                        savedVM.saveTour(token: currentTour.share_token)
+                        isSaved = true
+                    } label: {
+                        Label(isSaved ? "Saved!" : "Save tour",
+                              systemImage: isSaved ? "bookmark.fill" : "bookmark")
+                            .font(.system(size: 14))
+                            .foregroundColor(isSaved ? Color("Radish") : Color("SlateMid"))
+                    }
+
+                    Spacer()
+
+                    // Native iOS share sheet — shares tinyfoodtour.com/tour/{token}
+                    if let shareURL = URL(string: "https://tinyfoodtour.com/tour/\(currentTour.share_token)") {
+                        ShareLink(
+                            item: shareURL,
+                            subject: Text(currentTour.displayTitle),
+                            message: Text("Check out this food tour I built on Tiny Food Tour!")
+                        ) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                                .font(.system(size: 14))
+                                .foregroundColor(Color("SlateMid"))
+                        }
+                    }
                 }
             }
         }

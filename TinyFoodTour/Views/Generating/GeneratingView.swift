@@ -14,7 +14,7 @@ struct GeneratingView: View {
                 errorView(error)
             } else {
                 VStack(spacing: 20) {
-                    BrandMarkView(fontSize: 20)
+                    BrandMarkView(fontSize: 11)
 
                     ProgressView()
                         .tint(Color("Radish"))
@@ -47,7 +47,7 @@ struct GeneratingView: View {
 
     private func errorView(_ error: String) -> some View {
         VStack(spacing: 16) {
-            BrandMarkView(fontSize: 20)
+            BrandMarkView(fontSize: 11)
             Text("Tour generation hit a snag")
                 .font(.system(size: 15, weight: .medium))
             Text(error)
