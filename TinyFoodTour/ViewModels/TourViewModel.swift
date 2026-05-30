@@ -17,7 +17,17 @@ final class TourViewModel: ObservableObject {
     ]
     private var messageTask: Task<Void, Never>?
 
+    func generateWithTweaks(answers: QuizAnswers, numStops: Int, maxPrice: Int) async {
+        var tweaked = answers
+        // numStops and maxPrice passed directly to the edge function
+        await generateCore(answers: tweaked, numStops: numStops, maxPrice: maxPrice)
+    }
+
     func generate(answers: QuizAnswers) async {
+        await generateCore(answers: answers, numStops: nil, maxPrice: nil)
+    }
+
+    private func generateCore(answers: QuizAnswers, numStops: Int?, maxPrice: Int?) async {
         isGenerating = true
         generationError = nil
         startMessageCycle()
@@ -34,10 +44,13 @@ final class TourViewModel: ObservableObject {
         }
         if !answers.cuisines.isEmpty { body["cuisines"] = answers.cuisines }
         if !answers.mealType.isEmpty { body["meal_type"] = answers.mealType }
-        if !answers.budget.isEmpty {
+        if let mp = maxPrice {
+            body["max_price"] = mp
+        } else if !answers.budget.isEmpty {
             let priceMap = ["$": 1, "$$": 2, "$$$": 3]
             if let price = priceMap[answers.budget] { body["max_price"] = price }
         }
+        if let ns = numStops { body["num_stops"] = ns }
         if !answers.excludePlaceIds.isEmpty { body["exclude_place_ids"] = answers.excludePlaceIds }
         if !answers.favoritePlaceIds.isEmpty { body["favorite_place_ids"] = answers.favoritePlaceIds }
 

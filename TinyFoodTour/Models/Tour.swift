@@ -62,7 +62,8 @@ struct TourStop: Codable, Identifiable {
     }
 }
 
-struct Tour: Codable, Identifiable {
+struct Tour: Codable, Identifiable, Equatable {
+    static func == (lhs: Tour, rhs: Tour) -> Bool { lhs.id == rhs.id }
     let id: String
     let neighborhood: String
     let vibe: [String]

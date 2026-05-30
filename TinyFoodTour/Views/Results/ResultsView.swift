@@ -13,16 +13,24 @@ struct ResultsView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) var dismiss
     @StateObject private var savedVM = SavedToursViewModel()
+    @StateObject private var tweakVM = TourViewModel()
     @State private var navigateToLive = false
     @State private var isSaved = false
     @State private var currentTour: Tour
     @State private var shufflingIndex: Int? = nil
+    @State private var showTweaks = false
+    @State private var tweakStops: Double
+    @State private var tweakPrice: Double
 
     init(tour: Tour, isShared: Bool, generationParams: QuizAnswers?) {
         self.tour = tour
         self.isShared = isShared
         self.generationParams = generationParams
         _currentTour = State(initialValue: tour)
+        // Initialise sliders to current tour values
+        let stopCount = max(2, min(5, tour.stops.count))
+        _tweakStops = State(initialValue: Double(stopCount))
+        _tweakPrice = State(initialValue: 3)
     }
 
     private var stops: [TourStop] { currentTour.stops }
@@ -54,7 +62,21 @@ struct ResultsView: View {
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
-        // Cascade dismiss — lets "Build another tour" pop the full nav stack
+        .toolbar {
+            if !isShared {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button { showTweaks = true } label: {
+                        Image(systemName: "slider.horizontal.3")
+                            .foregroundColor(Color("TFTSlate"))
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showTweaks) { tweaksSheet }
+        // When tweakVM finishes regenerating, update the displayed tour
+        .onChange(of: tweakVM.tour) { _, newTour in
+            if let t = newTour { currentTour = t; showTweaks = false }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
@@ -153,6 +175,92 @@ struct ResultsView: View {
             // Shuffle failed silently — user can try again
         }
         shufflingIndex = nil
+    }
+
+    // MARK: - Tweaks sheet
+    private var tweaksSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 28) {
+                // Stops slider
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Stops")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color("Foreground"))
+                        Spacer()
+                        Text("\(Int(tweakStops))")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color("Primary"))
+                    }
+                    Slider(value: $tweakStops, in: 2...5, step: 1)
+                        .tint(Color("Primary"))
+                    HStack {
+                        Text("2").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Spacer()
+                        Text("5").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                    }
+                }
+
+                // Pricing slider
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("Pricing")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color("Foreground"))
+                        Spacer()
+                        Text(String(repeating: "$", count: Int(tweakPrice)))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color("Primary"))
+                    }
+                    Slider(value: $tweakPrice, in: 1...4, step: 1)
+                        .tint(Color("Primary"))
+                    HStack {
+                        Text("$").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Spacer()
+                        Text("$$$$").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                    }
+                }
+
+                Spacer()
+
+                // Apply
+                if tweakVM.isGenerating {
+                    HStack(spacing: 10) {
+                        ProgressView().tint(Color("Radish"))
+                        Text(tweakVM.generatingMessage)
+                            .font(.system(size: 13))
+                            .foregroundColor(Color("Radish"))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                } else {
+                    CTAButton(title: "Apply filters", isEnabled: true) {
+                        guard var params = generationParams else { return }
+                        params.walkDistance = params.walkDistance.isEmpty
+                            ? "A short stroll (10 min)" : params.walkDistance
+                        Task {
+                            var tweakedParams = params
+                            // Inject tweaked values — TourViewModel.generate() reads them
+                            await tweakVM.generateWithTweaks(
+                                answers: tweakedParams,
+                                numStops: Int(tweakStops),
+                                maxPrice: Int(tweakPrice)
+                            )
+                        }
+                    }
+                }
+            }
+            .padding(24)
+            .navigationTitle("Tweak your tour")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Cancel") { showTweaks = false }
+                        .foregroundColor(Color("SlateMid"))
+                }
+            }
+        }
+        .presentationDetents([.fraction(0.5)])
+        .presentationDragIndicator(.visible)
     }
 
     private var emptyStopsView: some View {
