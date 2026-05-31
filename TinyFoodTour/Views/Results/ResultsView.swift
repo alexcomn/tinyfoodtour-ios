@@ -89,8 +89,11 @@ struct ResultsView: View {
                         onStartHere: { navigateToLive = true },
                         onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
                     )
-                    // 16pt side margins: space between screen edge and card's white rounded rect
-                    .listRowInsets(.init(top: idx == 0 ? 16 : 6, leading: 16, bottom: 6, trailing: 16))
+                    // Padding on the view itself — listRowInsets not honoured in iOS 26
+                    .padding(.horizontal, 16)
+                    .padding(.top, idx == 0 ? 16 : 6)
+                    .padding(.bottom, 6)
+                    .listRowInsets(.init())
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color("Cream"))
                 }
