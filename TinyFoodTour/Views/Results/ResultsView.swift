@@ -52,19 +52,17 @@ struct ResultsView: View {
         // List (UITableView-backed) instead of ScrollView — guaranteed
         // to scroll on iOS 26 regardless of NavigationStack interactions.
         List {
-            // Header
+            // Header — listRowInsets zero so header's own .padding(.horizontal,20) controls margins
             Section {
                 header
-                    .padding(.horizontal, -20) // cancel List row insets
             }
             .listRowInsets(.init())
             .listRowSeparator(.hidden)
             .listRowBackground(Color("Cream"))
 
-            // Map
+            // Map — same: mapSection has its own horizontal padding
             Section {
                 mapSection
-                    .padding(.horizontal, -20)
             }
             .listRowInsets(.init())
             .listRowSeparator(.hidden)
@@ -91,16 +89,16 @@ struct ResultsView: View {
                         onStartHere: { navigateToLive = true },
                         onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
                     )
+                    // 16pt side margins: space between screen edge and card's white rounded rect
                     .listRowInsets(.init(top: idx == 0 ? 16 : 6, leading: 16, bottom: 6, trailing: 16))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color("Cream"))
                 }
             }
 
-            // Action bar
+            // Action bar — has its own .padding(.horizontal,20) internally
             Section {
                 actionBar
-                    .padding(.horizontal, -20)
             }
             .listRowInsets(.init())
             .listRowSeparator(.hidden)
