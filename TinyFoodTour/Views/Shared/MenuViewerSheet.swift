@@ -26,11 +26,36 @@ final class MenuViewModel: ObservableObject {
     @Published var error: String?
     @Published var collapsedSections: Set<Int> = []
 
-    func load(url: String, restaurantName: String) async {
+    func load(url: String, restaurantName: String, tourId: String? = nil, stopIndex: Int? = nil) async {
         isLoading = true
         error = nil
         menuData = nil
         collapsedSections = []
+
+        // 1. Check if menu_items already exist in our Supabase DB for this stop.
+        //    The web app scans & caches menu items there — reuse them instead of
+        //    calling fetch-menu every time.
+        if let tid = tourId, let idx = stopIndex {
+            struct Row: Codable {
+                let item_name: String
+                let item_price: String?
+                let item_description: String?
+            }
+            if let rows: [Row] = try? await SupabaseService.shared.query(
+                table: "menu_items",
+                select: "item_name,item_price,item_description",
+                filters: ["tour_id": "eq.\(tid)", "stop_index": "eq.\(idx)"],
+                order: "created_at"
+            ), !rows.isEmpty {
+                // Convert flat rows → single section named after the restaurant
+                let items = rows.map { MenuItemData(name: $0.item_name, price: $0.item_price, description: $0.item_description) }
+                menuData = MenuData(sections: [MenuSection(title: restaurantName, items: items)], note: nil, error: nil)
+                isLoading = false
+                return
+            }
+        }
+
+        // 2. DB miss → call fetch-menu edge function (scrapes the website)
         do {
             let data: MenuData = try await SupabaseService.shared.invokeFunction(
                 name: "fetch-menu",
@@ -66,6 +91,8 @@ final class MenuViewModel: ObservableObject {
 struct MenuViewerSheet: View {
     let url: String
     let restaurantName: String
+    var tourId: String? = nil      // pass to query menu_items first
+    var stopIndex: Int? = nil      // pass to query menu_items first
 
     @StateObject private var vm = MenuViewModel()
     @Environment(\.dismiss) var dismiss
@@ -114,7 +141,7 @@ struct MenuViewerSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .task { await vm.load(url: url, restaurantName: restaurantName) }
+        .task { await vm.load(url: url, restaurantName: restaurantName, tourId: tourId, stopIndex: stopIndex) }
     }
 
     private var loadingView: some View {

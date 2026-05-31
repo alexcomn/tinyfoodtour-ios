@@ -49,8 +49,8 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        ScrollView(.vertical) {
-            LazyVStack(spacing: 0, pinnedViews: []) {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 0) {
                 header
                 mapSection
                 stopList
@@ -58,7 +58,6 @@ struct ResultsView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .scrollBounceBehavior(.basedOnSize)
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
@@ -131,6 +130,7 @@ struct ResultsView: View {
                     ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
                         StopCard(
                             stop: stop,
+                            tourId: currentTour.id,
                             index: idx,
                             total: stops.count,
                             vibes: currentTour.vibe,
@@ -336,6 +336,7 @@ struct ResultsView: View {
 struct StopCard: View {
     @State private var showMenu = false
     let stop: TourStop
+    let tourId: String           // for menu_items DB lookup
     let index: Int
     let total: Int
     let vibes: [String]
@@ -468,32 +469,27 @@ struct StopCard: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
 
-            // ── Photo strip ──────────────────────────────────────────────────
+            // ── Photo strip — fixed HStack (no nested scroll to conflict
+            //    with the parent vertical ScrollView's gesture recogniser) ──────
             if let photos = stop.photos, !photos.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(photos.prefix(4), id: \.self) { url in
-                            AsyncImage(url: URL(string: url)) { phase in
-                                switch phase {
-                                case .success(let img):
-                                    img.resizable().scaledToFill()
-                                case .failure:
-                                    Color("CreamDark")
-                                default:
-                                    Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
-                                }
+                HStack(spacing: 8) {
+                    ForEach(photos.prefix(4), id: \.self) { url in
+                        AsyncImage(url: URL(string: url)) { phase in
+                            switch phase {
+                            case .success(let img): img.resizable().scaledToFill()
+                            case .failure:          Color("CreamDark")
+                            default:                Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
                             }
-                            .frame(width: 100, height: 72)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
-                            )
                         }
+                        .frame(width: 100, height: 72)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
                     }
-                    .padding(.horizontal, 16)
+                    Spacer(minLength: 0)
                 }
+                .padding(.horizontal, 16)
                 .padding(.top, 10)
+                .clipped()
             }
 
             // ── Divider + description + link button ──────────────────────────
@@ -525,7 +521,8 @@ struct StopCard: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(stopLabel): \(stop.name). \(cuisineDisplay)\(priceDisplay.isEmpty ? "" : ", \(priceDisplay)").")
         .sheet(isPresented: $showMenu) {
-            MenuViewerSheet(url: menuURLString, restaurantName: stop.name)
+            MenuViewerSheet(url: menuURLString, restaurantName: stop.name,
+                           tourId: tourId, stopIndex: index)
         }
     }
 

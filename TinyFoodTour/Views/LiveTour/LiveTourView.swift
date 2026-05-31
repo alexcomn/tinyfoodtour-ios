@@ -77,6 +77,7 @@ struct LiveTourView: View {
                     StopDetailView(
                         stop: stop,
                         allStops: tour.stops,
+                        tourId: tourId,
                         index: vm.currentStopIndex,
                         total: tour.stops.count,
                         completedIndices: Set(vm.progress.indices.filter { vm.progress[$0].completed }),
@@ -178,6 +179,7 @@ struct LiveTourView: View {
 struct StopDetailView: View {
     let stop: TourStop
     let allStops: [TourStop]
+    let tourId: String
     let index: Int
     let total: Int
     let completedIndices: Set<Int>
@@ -288,7 +290,8 @@ struct StopDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .sheet(isPresented: $showMenu) {
-                    MenuViewerSheet(url: menuURLString, restaurantName: stop.name)
+                    MenuViewerSheet(url: menuURLString, restaurantName: stop.name,
+                                   tourId: tourId, stopIndex: index)
                 }
             }
             .padding(.horizontal, 20)
