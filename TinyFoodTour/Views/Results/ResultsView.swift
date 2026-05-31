@@ -49,65 +49,41 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        // List (UITableView-backed) instead of ScrollView — guaranteed
-        // to scroll on iOS 26 regardless of NavigationStack interactions.
-        List {
-            // Header — listRowInsets zero so header's own .padding(.horizontal,20) controls margins
-            Section {
+        // Back to ScrollView + VStack now that the nested horizontal ScrollView
+        // (photos) has been replaced with a fixed HStack — the gesture conflict
+        // that blocked vertical scrolling is gone, and layout is correct.
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 0) {
                 header
-            }
-            .listRowInsets(.init())
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color("Cream"))
-
-            // Map — same: mapSection has its own horizontal padding
-            Section {
                 mapSection
-            }
-            .listRowInsets(.init())
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color("Cream"))
 
-            // Stop cards
-            if stops.isEmpty {
-                Section {
+                if stops.isEmpty {
                     emptyStopsView
-                }
-                .listRowInsets(.init())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color("Cream"))
-            } else {
-                ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                    StopCard(
-                        stop: stop,
-                        tourId: currentTour.id,
-                        index: idx,
-                        total: stops.count,
-                        vibes: currentTour.vibe,
-                        isFirst: idx == 0,
-                        isShuffling: shufflingIndex == idx,
-                        onStartHere: { navigateToLive = true },
-                        onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                    )
-                    // Padding on the view itself — listRowInsets not honoured in iOS 26
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                            StopCard(
+                                stop: stop,
+                                tourId: currentTour.id,
+                                index: idx,
+                                total: stops.count,
+                                vibes: currentTour.vibe,
+                                isFirst: idx == 0,
+                                isShuffling: shufflingIndex == idx,
+                                onStartHere: { navigateToLive = true },
+                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                            )
+                        }
+                    }
                     .padding(.horizontal, 16)
-                    .padding(.top, idx == 0 ? 16 : 6)
-                    .padding(.bottom, 6)
-                    .listRowInsets(.init())
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(Color("Cream"))
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                 }
-            }
 
-            // Action bar — has its own .padding(.horizontal,20) internally
-            Section {
                 actionBar
             }
-            .listRowInsets(.init())
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color("Cream"))
+            .frame(maxWidth: .infinity)
         }
-        .listStyle(.plain)
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
