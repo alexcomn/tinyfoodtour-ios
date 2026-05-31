@@ -49,15 +49,64 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 0) {
+        // List (UITableView-backed) instead of ScrollView — guaranteed
+        // to scroll on iOS 26 regardless of NavigationStack interactions.
+        List {
+            // Header
+            Section {
                 header
-                mapSection
-                stopList
-                actionBar
+                    .padding(.horizontal, -20) // cancel List row insets
             }
-            .frame(maxWidth: .infinity)
+            .listRowInsets(.init())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color("Cream"))
+
+            // Map
+            Section {
+                mapSection
+                    .padding(.horizontal, -20)
+            }
+            .listRowInsets(.init())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color("Cream"))
+
+            // Stop cards
+            if stops.isEmpty {
+                Section {
+                    emptyStopsView
+                }
+                .listRowInsets(.init())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color("Cream"))
+            } else {
+                ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                    StopCard(
+                        stop: stop,
+                        tourId: currentTour.id,
+                        index: idx,
+                        total: stops.count,
+                        vibes: currentTour.vibe,
+                        isFirst: idx == 0,
+                        isShuffling: shufflingIndex == idx,
+                        onStartHere: { navigateToLive = true },
+                        onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                    )
+                    .listRowInsets(.init(top: idx == 0 ? 16 : 6, leading: 16, bottom: 6, trailing: 16))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color("Cream"))
+                }
+            }
+
+            // Action bar
+            Section {
+                actionBar
+                    .padding(.horizontal, -20)
+            }
+            .listRowInsets(.init())
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color("Cream"))
         }
+        .listStyle(.plain)
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)
         .darkStatusBar()
@@ -121,33 +170,6 @@ struct ResultsView: View {
     }
 
     // MARK: - Stop cards
-    private var stopList: some View {
-        Group {
-            if stops.isEmpty {
-                emptyStopsView
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                        StopCard(
-                            stop: stop,
-                            tourId: currentTour.id,
-                            index: idx,
-                            total: stops.count,
-                            vibes: currentTour.vibe,
-                            isFirst: idx == 0,
-                            isShuffling: shufflingIndex == idx,
-                            onStartHere: { navigateToLive = true },
-                            onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                        )
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-    }
-
     // MARK: - Shuffle
     private func shuffleStop(at index: Int) async {
         guard shufflingIndex == nil else { return }
