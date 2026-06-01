@@ -52,50 +52,49 @@ struct ResultsView: View {
         // No NavigationStack, no .toolbar, no .navigationBarTitleDisplayMode.
         // iOS 26 applies automatic content margin adjustments via those modifiers
         // that shift ScrollView content left. We own all navigation chrome manually.
-        ZStack(alignment: .top) {
-            ScrollView(.vertical, showsIndicators: true) {
-                // Top padding so content clears the floating nav buttons
-                Spacer().frame(height: 60)
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 0) {
+                header
+                mapSection
 
-                VStack(spacing: 0) {
-                    header
-                    mapSection
-
-                    if stops.isEmpty {
-                        emptyStopsView
-                    } else {
-                        VStack(spacing: 12) {
-                            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                                StopCard(
-                                    stop: stop,
-                                    tourId: currentTour.id,
-                                    index: idx,
-                                    total: stops.count,
-                                    vibes: currentTour.vibe,
-                                    isFirst: idx == 0,
-                                    isShuffling: shufflingIndex == idx,
-                                    onStartHere: { navigateToLive = true },
-                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                                )
-                            }
+                if stops.isEmpty {
+                    emptyStopsView
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                            StopCard(
+                                stop: stop,
+                                tourId: currentTour.id,
+                                index: idx,
+                                total: stops.count,
+                                vibes: currentTour.vibe,
+                                isFirst: idx == 0,
+                                isShuffling: shufflingIndex == idx,
+                                onStartHere: { navigateToLive = true },
+                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                            )
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
                     }
-
-                    actionBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                 }
-            }
 
-            // Floating nav bar — back/close + tweaks, no NavigationStack involvement
+                actionBar
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .background(Color("Cream"))
+        // safeAreaInset: places floating nav buttons above scroll content cleanly.
+        // The ScrollView automatically insets its content so nothing hides behind them.
+        .safeAreaInset(edge: .top, spacing: 0) {
             HStack {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
                         .frame(width: 38, height: 38)
-                        .background(Color("Cream").opacity(0.9))
+                        .background(.ultraThinMaterial)
                         .clipShape(Circle())
                 }
                 Spacer()
@@ -105,18 +104,15 @@ struct ResultsView: View {
                             .font(.system(size: 15))
                             .foregroundColor(Color("TFTSlate"))
                             .frame(width: 38, height: 38)
-                            .background(Color("Cream").opacity(0.9))
+                            .background(.ultraThinMaterial)
                             .clipShape(Circle())
                     }
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.vertical, 8)
+            .background(Color.clear)
         }
-        // Background applied OUTSIDE the ZStack — Color.ignoresSafeArea() inside
-        // a ZStack expands the ZStack's coordinate space beyond the safe area,
-        // shifting all content left by ~safe-area-leading-inset pixels.
-        .background(Color("Cream").ignoresSafeArea())
         .ignoresSafeArea(edges: .top)
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
