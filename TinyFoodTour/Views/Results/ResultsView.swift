@@ -54,6 +54,9 @@ struct ResultsView: View {
         // that shift ScrollView content left. We own all navigation chrome manually.
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
+                // Reserve space for the floating nav buttons (status bar ~59pt + buttons 38pt + padding 8pt)
+                Color.clear.frame(height: 108)
+
                 header
                 mapSection
 
@@ -85,17 +88,17 @@ struct ResultsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
-        // safeAreaInset sits below the Dynamic Island safe area — content is
-        // inset automatically, no ignoresSafeArea needed (that was conflicting).
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // overlay: purely visual, zero effect on coordinate space or scroll geometry
+        .overlay(alignment: .top) {
             HStack {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
                         .frame(width: 38, height: 38)
-                        .background(Color("Cream").opacity(0.95))
+                        .background(Color("Cream"))
                         .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 }
                 Spacer()
                 if !isShared {
@@ -104,15 +107,14 @@ struct ResultsView: View {
                             .font(.system(size: 15))
                             .foregroundColor(Color("TFTSlate"))
                             .frame(width: 38, height: 38)
-                            .background(Color("Cream").opacity(0.95))
+                            .background(Color("Cream"))
                             .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                     }
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            // Opaque Cream background so buttons are legible over scroll content
-            .background(Color("Cream"))
+            .padding(.top, 60) // clears Dynamic Island (~59pt safe area)
         }
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
