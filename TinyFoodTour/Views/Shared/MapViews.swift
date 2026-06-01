@@ -11,26 +11,30 @@ struct RouteSnapshotView: View {
     @State private var snapshot: UIImage?
     @State private var isLoading = true
 
+    // Fixed render dimensions — avoids GeometryReader inside ScrollView which
+    // reports infinite height during measurement and collapses scroll content.
+    // Map section has 20pt padding each side so usable width = screen - 40.
+    private var renderWidth: CGFloat { UIScreen.main.bounds.width - 40 }
+    private let renderHeight: CGFloat = 180
+
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                if let img = snapshot {
-                    Image(uiImage: img)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                } else {
-                    Color("CreamDark")
-                    if isLoading {
-                        ProgressView().tint(Color("SlateMid"))
-                    }
+        ZStack {
+            if let img = snapshot {
+                Image(uiImage: img)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: renderWidth, height: renderHeight)
+                    .clipped()
+            } else {
+                Color("CreamDark")
+                if isLoading {
+                    ProgressView().tint(Color("SlateMid"))
                 }
             }
-            .frame(width: geo.size.width, height: geo.size.height)
-            .task(id: stops.map(\.place_id).joined() + "\(geo.size.width)-\(completedIndices.sorted().map(String.init).joined())") {
-                await render(width: geo.size.width, height: geo.size.height)
-            }
+        }
+        .frame(width: renderWidth, height: renderHeight)
+        .task(id: stops.map(\.place_id).joined() + "-\(completedIndices.sorted().map(String.init).joined())") {
+            await render(width: renderWidth, height: renderHeight)
         }
     }
 

@@ -138,12 +138,9 @@ struct ResultsView: View {
     // MARK: - Map
     private var mapSection: some View {
         RouteSnapshotView(stops: stops)
-            .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color("Cream"))
-            .frame(maxWidth: .infinity)
     }
 
     // MARK: - Stop cards
