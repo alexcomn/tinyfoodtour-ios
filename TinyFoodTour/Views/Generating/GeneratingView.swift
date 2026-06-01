@@ -38,10 +38,8 @@ struct GeneratingView: View {
         // issues that caused content to be clipped/offset on the left edge.
         .fullScreenCover(isPresented: $navigateToResults) {
             if let tour = vm.tour {
-                NavigationStack {
-                    ResultsView(tour: tour, isShared: false, generationParams: answers)
-                }
-                .environmentObject(authVM)
+                ResultsView(tour: tour, isShared: false, generationParams: answers)
+                    .environmentObject(authVM)
             }
         }
         .task {

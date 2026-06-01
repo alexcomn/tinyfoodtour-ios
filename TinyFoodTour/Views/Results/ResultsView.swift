@@ -49,66 +49,85 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        // Back to ScrollView + VStack now that the nested horizontal ScrollView
-        // (photos) has been replaced with a fixed HStack — the gesture conflict
-        // that blocked vertical scrolling is gone, and layout is correct.
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 0) {
-                header
-                mapSection
+        // No NavigationStack, no .toolbar, no .navigationBarTitleDisplayMode.
+        // iOS 26 applies automatic content margin adjustments via those modifiers
+        // that shift ScrollView content left. We own all navigation chrome manually.
+        ZStack(alignment: .top) {
+            Color("Cream").ignoresSafeArea()
 
-                if stops.isEmpty {
-                    emptyStopsView
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                            StopCard(
-                                stop: stop,
-                                tourId: currentTour.id,
-                                index: idx,
-                                total: stops.count,
-                                vibes: currentTour.vibe,
-                                isFirst: idx == 0,
-                                isShuffling: shufflingIndex == idx,
-                                onStartHere: { navigateToLive = true },
-                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                            )
+            ScrollView(.vertical, showsIndicators: true) {
+                // Top padding so content clears the floating nav buttons
+                Spacer().frame(height: 60)
+
+                VStack(spacing: 0) {
+                    header
+                    mapSection
+
+                    if stops.isEmpty {
+                        emptyStopsView
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                                StopCard(
+                                    stop: stop,
+                                    tourId: currentTour.id,
+                                    index: idx,
+                                    total: stops.count,
+                                    vibes: currentTour.vibe,
+                                    isFirst: idx == 0,
+                                    isShuffling: shufflingIndex == idx,
+                                    onStartHere: { navigateToLive = true },
+                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                                )
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-                }
 
-                actionBar
+                    actionBar
+                }
             }
-            .frame(maxWidth: .infinity)
-        }
-        .background(Color("Cream"))
-        .navigationBarTitleDisplayMode(.inline)
-        .darkStatusBar()
-        .toolbar {
-            if !isShared {
-                ToolbarItem(placement: .navigationBarTrailing) {
+
+            // Floating nav bar — back/close + tweaks, no NavigationStack involvement
+            HStack {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Color("TFTSlate"))
+                        .frame(width: 38, height: 38)
+                        .background(Color("Cream").opacity(0.9))
+                        .clipShape(Circle())
+                }
+                Spacer()
+                if !isShared {
                     Button { showTweaks = true } label: {
                         Image(systemName: "slider.horizontal.3")
+                            .font(.system(size: 15))
                             .foregroundColor(Color("TFTSlate"))
+                            .frame(width: 38, height: 38)
+                            .background(Color("Cream").opacity(0.9))
+                            .clipShape(Circle())
                     }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
         }
+        .ignoresSafeArea(edges: .top)
+        .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
-        // When tweakVM finishes regenerating, update the displayed tour
         .onChange(of: tweakVM.tour) { _, newTour in
             if let t = newTour { currentTour = t; showTweaks = false }
         }
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
-        .navigationDestination(isPresented: $navigateToLive) {
+        // LiveTour as fullScreenCover — no navigationDestination, no nav stack
+        .fullScreenCover(isPresented: $navigateToLive) {
             LiveTourView(tourId: tour.id)
                 .environmentObject(authVM)
-                
         }
     }
 
