@@ -33,13 +33,15 @@ struct GeneratingView: View {
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
-        // fullScreenCover instead of navigationDestination — gives ResultsView its
-        // own clean window layer, bypassing iOS 26 NavigationStack coordinate space
-        // issues that caused content to be clipped/offset on the left edge.
-        .fullScreenCover(isPresented: $navigateToResults) {
+        // UIKit .fullScreen + .crossDissolve — no zoom animation, no coordinate transform,
+        // guaranteed correct frame. Replaces fullScreenCover which uses iOS 26's zoom
+        // animation that leaves views with a residual coordinate offset.
+        .uiFullScreen(isPresented: $navigateToResults) {
             if let tour = vm.tour {
                 ResultsView(tour: tour, isShared: false, generationParams: answers)
                     .environmentObject(authVM)
+            } else {
+                EmptyView()
             }
         }
         .task {

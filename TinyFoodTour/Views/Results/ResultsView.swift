@@ -54,9 +54,6 @@ struct ResultsView: View {
         // that shift ScrollView content left. We own all navigation chrome manually.
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
-                // Reserve space for the floating nav buttons (status bar ~59pt + buttons 38pt + padding 8pt)
-                Color.clear.frame(height: 108)
-
                 header
                 mapSection
 
@@ -88,8 +85,9 @@ struct ResultsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
-        // overlay: purely visual, zero effect on coordinate space or scroll geometry
-        .overlay(alignment: .top) {
+        // safeAreaInset works correctly in a UIHostingController context (no iOS 26 SwiftUI
+        // presentation offset). Places the nav buttons in the top safe area cleanly.
+        .safeAreaInset(edge: .top, spacing: 0) {
             HStack {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
@@ -114,7 +112,8 @@ struct ResultsView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 60) // clears Dynamic Island (~59pt safe area)
+            .padding(.vertical, 8)
+            .background(Color("Cream"))
         }
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
@@ -124,8 +123,8 @@ struct ResultsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
-        // LiveTour as fullScreenCover — no navigationDestination, no nav stack
-        .fullScreenCover(isPresented: $navigateToLive) {
+        // LiveTour via UIKit .crossDissolve — consistent with Results presentation
+        .uiFullScreen(isPresented: $navigateToLive) {
             LiveTourView(tourId: tour.id)
                 .environmentObject(authVM)
         }
