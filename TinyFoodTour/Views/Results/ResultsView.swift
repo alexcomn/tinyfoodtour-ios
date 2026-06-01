@@ -53,8 +53,6 @@ struct ResultsView: View {
         // iOS 26 applies automatic content margin adjustments via those modifiers
         // that shift ScrollView content left. We own all navigation chrome manually.
         ZStack(alignment: .top) {
-            Color("Cream").ignoresSafeArea()
-
             ScrollView(.vertical, showsIndicators: true) {
                 // Top padding so content clears the floating nav buttons
                 Spacer().frame(height: 60)
@@ -115,6 +113,10 @@ struct ResultsView: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
         }
+        // Background applied OUTSIDE the ZStack — Color.ignoresSafeArea() inside
+        // a ZStack expands the ZStack's coordinate space beyond the safe area,
+        // shifting all content left by ~safe-area-leading-inset pixels.
+        .background(Color("Cream").ignoresSafeArea())
         .ignoresSafeArea(edges: .top)
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
