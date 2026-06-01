@@ -110,12 +110,13 @@ struct Tour: Codable, Identifiable, Equatable {
                 extractedTitle = meta["tour_title"] as? String
                 extractedMiles = meta["total_distance_miles"] as? Double
             }
-            stops = arr
+            let decoded = arr
                 .filter { $0["_meta"] as? Bool != true }
-                .compactMap { dict in
+                .compactMap { dict -> TourStop? in
                     guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
                     return try? JSONDecoder().decode(TourStop.self, from: data)
                 }
+            stops = Tour.reorderLinear(decoded)
         } else {
             stops = []
         }
@@ -126,6 +127,78 @@ struct Tour: Codable, Identifiable, Equatable {
     /// Display title: AI-generated tour title from _meta, fallback to neighborhood
     var displayTitle: String {
         tourTitle ?? "\(neighborhood) Tour"
+    }
+
+    // MARK: - Client-side TSP reorder
+    // Mirrors reorderStopsLinear in generate-tour edge function.
+    // Pins dessert last, runs nearest-neighbour TSP on remaining stops,
+    // picks the start that yields the shortest total haversine distance.
+    static func reorderLinear(_ stops: [TourStop]) -> [TourStop] {
+        guard stops.count > 1 else { return stops }
+
+        let dessertTypes: Set<String> = ["dessert", "sweet finish", "sweet_finish"]
+        let dessertIdx = stops.indices.last(where: {
+            dessertTypes.contains(stops[$0].stop_type.lowercased())
+        })
+
+        var mobile = stops
+        var pinned: TourStop? = nil
+        if let di = dessertIdx {
+            pinned = mobile.remove(at: di)
+        }
+        guard mobile.count > 1 else {
+            var result = mobile
+            if let p = pinned { result.append(p) }
+            return result
+        }
+
+        func dist(_ a: TourStop, _ b: TourStop) -> Double {
+            guard let la = a.lat, let lna = a.lng,
+                  let lb = b.lat, let lnb = b.lng else { return 0 }
+            let dLat = (lb - la) * .pi / 180
+            let dLng = (lnb - lna) * .pi / 180
+            let sinLat = sin(dLat / 2)
+            let sinLng = sin(dLng / 2)
+            let a2 = sinLat*sinLat + cos(la * .pi/180)*cos(lb * .pi/180)*sinLng*sinLng
+            return 6371000 * 2 * atan2(sqrt(a2), sqrt(1 - a2))
+        }
+
+        var bestRoute = mobile
+        var bestDist = Double.infinity
+
+        for startIdx in mobile.indices {
+            var remaining = mobile
+            var route: [TourStop] = [remaining.remove(at: startIdx)]
+            while !remaining.isEmpty {
+                let last = route.last!
+                let nextIdx = remaining.indices.min(by: { dist(last, remaining[$0]) < dist(last, remaining[$1]) })!
+                route.append(remaining.remove(at: nextIdx))
+            }
+            let total = zip(route, route.dropFirst()).map { dist($0, $1) }.reduce(0, +)
+            if total < bestDist { bestDist = total; bestRoute = route }
+        }
+
+        // Re-number stop_number in order (preserve stop_type)
+        var result = bestRoute.enumerated().map { i, s in
+            TourStop(stop_number: i + 1, stop_type: s.stop_type, place_id: s.place_id,
+                     name: s.name, address: s.address, lat: s.lat, lng: s.lng,
+                     cuisine_type: s.cuisine_type, cuisine_label: s.cuisine_label,
+                     price_level: s.price_level, website_url: s.website_url,
+                     menu_url: s.menu_url, google_maps_url: s.google_maps_url,
+                     description: s.description, walk_time_from_previous: s.walk_time_from_previous,
+                     rating: s.rating, photos: s.photos, opening_hours: s.opening_hours)
+        }
+        if var p = pinned {
+            p = TourStop(stop_number: result.count + 1, stop_type: p.stop_type, place_id: p.place_id,
+                         name: p.name, address: p.address, lat: p.lat, lng: p.lng,
+                         cuisine_type: p.cuisine_type, cuisine_label: p.cuisine_label,
+                         price_level: p.price_level, website_url: p.website_url,
+                         menu_url: p.menu_url, google_maps_url: p.google_maps_url,
+                         description: p.description, walk_time_from_previous: p.walk_time_from_previous,
+                         rating: p.rating, photos: p.photos, opening_hours: p.opening_hours)
+            result.append(p)
+        }
+        return result
     }
 }
 

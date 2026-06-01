@@ -52,7 +52,6 @@ struct ResultsView: View {
         // Back to ScrollView + VStack now that the nested horizontal ScrollView
         // (photos) has been replaced with a fixed HStack — the gesture conflict
         // that blocked vertical scrolling is gone, and layout is correct.
-        let screenW = UIScreen.main.bounds.width
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
                 header
@@ -83,10 +82,7 @@ struct ResultsView: View {
 
                 actionBar
             }
-            // Explicit screen width — prevents iOS 26 NavigationStack from
-            // giving the content a wider-than-screen coordinate space which
-            // causes content to overflow the left edge with no visible margin.
-            .frame(width: screenW)
+            .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
         .navigationBarTitleDisplayMode(.inline)

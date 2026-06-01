@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneratingView: View {
     let answers: QuizAnswers
+    @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var vm = TourViewModel()
     @State private var navigateToResults = false
     @Environment(\.dismiss) var dismiss
@@ -32,12 +33,15 @@ struct GeneratingView: View {
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
-        .navigationDestination(isPresented: $navigateToResults) {
+        // fullScreenCover instead of navigationDestination — gives ResultsView its
+        // own clean window layer, bypassing iOS 26 NavigationStack coordinate space
+        // issues that caused content to be clipped/offset on the left edge.
+        .fullScreenCover(isPresented: $navigateToResults) {
             if let tour = vm.tour {
-                ResultsView(tour: tour, isShared: false, generationParams: answers)
-                    // iOS 26 uses a zoom push transition by default which can leave
-                    // views in an offset/scaled state. Use classic slide instead.
-                    
+                NavigationStack {
+                    ResultsView(tour: tour, isShared: false, generationParams: answers)
+                }
+                .environmentObject(authVM)
             }
         }
         .task {
