@@ -23,6 +23,7 @@ struct QuizView: View {
         }
         .navigationDestination(isPresented: $navigateToGenerating) {
             GeneratingView(answers: vm.answers)
+                
         }
         .task {
             await vm.loadTree()

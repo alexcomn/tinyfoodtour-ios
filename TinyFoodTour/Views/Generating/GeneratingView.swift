@@ -35,6 +35,9 @@ struct GeneratingView: View {
         .navigationDestination(isPresented: $navigateToResults) {
             if let tour = vm.tour {
                 ResultsView(tour: tour, isShared: false, generationParams: answers)
+                    // iOS 26 uses a zoom push transition by default which can leave
+                    // views in an offset/scaled state. Use classic slide instead.
+                    
             }
         }
         .task {

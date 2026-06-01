@@ -99,6 +99,7 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $showQuiz) {
                 QuizView()
+                    
             }
             .sheet(isPresented: $showAuth) {
                 AuthView()
