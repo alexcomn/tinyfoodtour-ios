@@ -71,6 +71,11 @@ final class QuizViewModel: ObservableObject {
             if completedToursCount >= 1, !opts.contains("Try somewhere new!") { opts.append("Try somewhere new!") }
             if completedToursCount >= 3, !opts.contains("Visit an old favorite") { opts.append("Visit an old favorite") }
         }
+        // Pin "Surprise me!" last regardless of sort_order (mirrors web sortOptions())
+        if let idx = opts.firstIndex(of: "Surprise me!") {
+            opts.remove(at: idx)
+            opts.append("Surprise me!")
+        }
         return opts
     }
 
@@ -241,10 +246,14 @@ final class QuizViewModel: ObservableObject {
                 answers.cuisines = [option]
             }
         case "dietary":
-            // Dietary is multi_select in quiz_tree — toggle membership
+            // Mutual-exclusion rule (§2 brief): "Eat everything" is exclusive.
+            // Selecting it clears all others. Selecting anything else removes it.
             if answers.dietary.contains(option) {
                 answers.dietary.removeAll { $0 == option }
+            } else if option == "Eat everything" {
+                answers.dietary = ["Eat everything"]          // clears all others
             } else {
+                answers.dietary.removeAll { $0 == "Eat everything" } // remove exclusion
                 answers.dietary.append(option)
             }
         case "budget":
@@ -277,11 +286,16 @@ final class QuizViewModel: ObservableObject {
         if answers.vibe.contains("Visit an old favorite") {
             answers.favoritePlaceIds = favoritePlaceIds
         }
+        // Defensive dietary strip (§2 brief): if "Eat everything" somehow co-exists
+        // with other values (e.g. loaded from legacy state), remove it.
+        if answers.dietary.count > 1 {
+            answers.dietary.removeAll { $0 == "Eat everything" }
+        }
         if stepIndex < totalSteps - 1 {
             stepIndex += 1
             return false
         }
-        return true // done — caller navigates to Generating
+        return true
     }
 
     func goBack() -> Bool {

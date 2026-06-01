@@ -73,18 +73,23 @@ struct Tour: Codable, Identifiable, Equatable {
     let created_at: String
     let user_id: String?
     let share_token: String
-    // Extracted from the _meta synthetic stop injected by the edge function (§4.12)
+    // Extracted from the _meta synthetic stop (§4.8 brief)
     let tourTitle: String?
     let totalDistanceMiles: Double?
+    /// Relaxations fired during generation (§7 brief). When "allowed_visited" is present
+    /// the UI shows the "We stretched a bit" notice in Results.
+    let relaxations: [String]
 
     init(id: String, neighborhood: String, vibe: [String], dietary: [String],
          walk_distance: String, stops: [TourStop], created_at: String,
          user_id: String?, share_token: String,
-         tourTitle: String? = nil, totalDistanceMiles: Double? = nil) {
+         tourTitle: String? = nil, totalDistanceMiles: Double? = nil,
+         relaxations: [String] = []) {
         self.id = id; self.neighborhood = neighborhood; self.vibe = vibe
         self.dietary = dietary; self.walk_distance = walk_distance; self.stops = stops
         self.created_at = created_at; self.user_id = user_id; self.share_token = share_token
         self.tourTitle = tourTitle; self.totalDistanceMiles = totalDistanceMiles
+        self.relaxations = relaxations
     }
 
     init(from decoder: Decoder) throws {
@@ -102,13 +107,15 @@ struct Tour: Codable, Identifiable, Equatable {
         // (b) extract tour_title / total_distance_miles from the synthetic _meta stop
         var extractedTitle: String? = nil
         var extractedMiles: Double? = nil
+        var extractedRelaxations: [String] = []
         if let raw = try? c.decode(AnyCodable.self, forKey: .stops),
            let arr = raw.value as? [[String: Any]] {
-            // Pull metadata from the _meta stop before filtering
+            // Pull metadata from the _meta stop (§4.8 brief: tour_title, total_distance_miles, relaxations)
             if let metaStop = arr.first(where: { $0["_meta"] as? Bool == true }),
                let meta = metaStop["_meta"] as? [String: Any] {
                 extractedTitle = meta["tour_title"] as? String
                 extractedMiles = meta["total_distance_miles"] as? Double
+                extractedRelaxations = (meta["relaxations"] as? [String]) ?? []
             }
             let decoded = arr
                 .filter { $0["_meta"] as? Bool != true }
@@ -122,6 +129,7 @@ struct Tour: Codable, Identifiable, Equatable {
         }
         tourTitle = extractedTitle
         totalDistanceMiles = extractedMiles
+        relaxations = extractedRelaxations
     }
 
     /// Display title: AI-generated tour title from _meta, fallback to neighborhood

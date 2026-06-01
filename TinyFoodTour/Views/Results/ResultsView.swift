@@ -157,10 +157,28 @@ struct ResultsView: View {
 
     // MARK: - Map
     private var mapSection: some View {
-        RouteSnapshotView(stops: stops)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+        VStack(spacing: 0) {
+            // §6 brief: show "stretched tour" notice when relaxations includes "allowed_visited"
+            if currentTour.relaxations.contains("allowed_visited") {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color("TFTOrange"))
+                    Text("We stretched a bit — one of these is from a previous tour. Slim pickings in this corner of the map.")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color("SlateMid"))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            RouteSnapshotView(stops: stops)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+        }
     }
 
     // MARK: - Stop cards
