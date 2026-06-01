@@ -85,8 +85,8 @@ struct ResultsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
-        // safeAreaInset: places floating nav buttons above scroll content cleanly.
-        // The ScrollView automatically insets its content so nothing hides behind them.
+        // safeAreaInset sits below the Dynamic Island safe area — content is
+        // inset automatically, no ignoresSafeArea needed (that was conflicting).
         .safeAreaInset(edge: .top, spacing: 0) {
             HStack {
                 Button { dismiss() } label: {
@@ -94,7 +94,7 @@ struct ResultsView: View {
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
                         .frame(width: 38, height: 38)
-                        .background(.ultraThinMaterial)
+                        .background(Color("Cream").opacity(0.95))
                         .clipShape(Circle())
                 }
                 Spacer()
@@ -104,16 +104,16 @@ struct ResultsView: View {
                             .font(.system(size: 15))
                             .foregroundColor(Color("TFTSlate"))
                             .frame(width: 38, height: 38)
-                            .background(.ultraThinMaterial)
+                            .background(Color("Cream").opacity(0.95))
                             .clipShape(Circle())
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(Color.clear)
+            // Opaque Cream background so buttons are legible over scroll content
+            .background(Color("Cream"))
         }
-        .ignoresSafeArea(edges: .top)
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
         .onChange(of: tweakVM.tour) { _, newTour in
