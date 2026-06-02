@@ -18,6 +18,7 @@ struct ResultsView: View {
     @StateObject private var savedVM = SavedToursViewModel()
     @StateObject private var tweakVM = TourViewModel()
     @State private var showLiveTour = false
+    @State private var completedStopIndices: Set<Int> = []   // populated when user reviews after completing
     @State private var isSaved = false
     @State private var currentTour: Tour
     @State private var shufflingIndex: Int? = nil
@@ -55,8 +56,11 @@ struct ResultsView: View {
         // LiveTourView shown inline — same reason as GeneratingView→ResultsView:
         // any iOS 26 presentation adds a coordinate transform. Inline swap has none.
         if showLiveTour {
-            LiveTourView(tourId: currentTour.id)
-                .environmentObject(authVM)
+            LiveTourView(tourId: currentTour.id, onReviewStops: { indices in
+                completedStopIndices = indices
+                showLiveTour = false
+            })
+            .environmentObject(authVM)
         } else {
             resultsContent
         }
@@ -88,6 +92,7 @@ struct ResultsView: View {
                                     mealType: currentTour.mealType,
                                     vibes: currentTour.vibe,
                                     isFirst: idx == 0,
+                                    isCompleted: completedStopIndices.contains(idx),
                                     isShuffling: shufflingIndex == idx,
                                     onStartHere: { showLiveTour = true },
                                     onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
@@ -165,6 +170,22 @@ struct ResultsView: View {
             Text(tourMetaLine)
                 .font(.system(size: 13))
                 .foregroundColor(Color("SlateMid"))
+
+            // Completion summary — only shown when returning from Live Tour
+            if !completedStopIndices.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: completedStopIndices.count == stops.count
+                          ? "checkmark.circle.fill" : "checkmark.circle")
+                        .font(.system(size: 13))
+                        .foregroundColor(.green)
+                    Text(completedStopIndices.count == stops.count
+                         ? "All \(stops.count) stops visited"
+                         : "\(completedStopIndices.count) of \(stops.count) stops visited")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.green)
+                }
+                .padding(.top, 8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 20)
@@ -394,6 +415,7 @@ struct StopCard: View {
     let mealType: String?
     let vibes: [String]
     let isFirst: Bool
+    let isCompleted: Bool        // true when returning from Live Tour with this stop visited
     let isShuffling: Bool
     let onStartHere: () -> Void
     let onShuffle: (() -> Void)?
@@ -443,12 +465,18 @@ struct StopCard: View {
         VStack(alignment: .leading, spacing: 0) {
             // ── Row 1: badge · label+name · walk/start ──────────────────────
             HStack(alignment: .top, spacing: 12) {
-                // Numbered circle badge
+                // Badge: green ✓ if visited, brand colour + number otherwise
                 ZStack {
-                    Circle().fill(stopColor)
-                    Text(String(format: "%02d", index + 1))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
+                    Circle().fill(isCompleted ? Color(hex: "#22c55e") : stopColor)
+                    if isCompleted {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                    } else {
+                        Text(String(format: "%02d", index + 1))
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
                 }
                 .frame(width: 30, height: 30)
                 .flexibleShrink()

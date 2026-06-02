@@ -4,6 +4,8 @@ import PhotosUI
 
 struct LiveTourView: View {
     let tourId: String
+    /// Called with the set of completed stop indices when "Review your stops" is tapped.
+    var onReviewStops: ((Set<Int>) -> Void)? = nil
     @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var vm = LiveTourViewModel()
     @Environment(\.dismiss) var dismiss
@@ -45,8 +47,11 @@ struct LiveTourView: View {
                         NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
                     },
                     onReviewStops: {
-                        // Pop back to ResultsView so user can review all stop cards
+                        // Collect completed indices, dismiss the sheet, then pass
+                        // them back to ResultsView via the onReviewStops closure.
+                        let completed = Set(vm.progress.indices.filter { vm.progress[$0].completed })
                         dismiss()
+                        onReviewStops?(completed)
                     }
                 )
             }
