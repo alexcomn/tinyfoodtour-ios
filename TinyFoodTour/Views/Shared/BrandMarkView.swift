@@ -1,14 +1,14 @@
 import SwiftUI
 
-// Matches web BrandMark.tsx:
-//   font-body text-[10px] font-medium tracking-[0.25em] uppercase text-foreground
-// fontSize param scales for context (nav = 10, hero = 13)
+// Wordmark font: Fraunces (display serif) per ios-branding-brief.md §1.
+// iOS approximation: .system(design: .serif) — New York display serif.
+// Tracking 0.25em, uppercase, medium weight.
 struct BrandMarkView: View {
     var fontSize: CGFloat = 11
 
     var body: some View {
         Text("TINY FOOD TOUR")
-            .font(.system(size: fontSize, weight: .medium))
+            .font(.system(size: fontSize, weight: .medium, design: .serif))
             .tracking(fontSize * 0.25)
             .foregroundColor(Color("Foreground"))
     }

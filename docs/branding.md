@@ -40,22 +40,25 @@ Used for map markers, circle badges, and stop labels. Always use in this exact o
 ## Typography
 
 ### Web (Tailwind classes)
-- **Headings:** `font-heading` → Playfair Display (serif), weights 400–700
+- **Headings:** `font-heading` → **Josefin Sans** (geometric sans), weights 300–700. Applied site-wide via the Weekly Theme system; Playfair Display is only the Tailwind fallback when no theme is active.
 - **Body:** `font-body` → DM Sans (sans), weights 300–700
+- **Wordmark:** **Fraunces** (display serif), uppercase, letter-spacing 0.25em, weight 500
 
 ### iOS (SwiftUI)
-- **Headings:** `.font(.system(size: X, weight: .bold, design: .serif))` — system serif approximates Playfair Display
+- **Headings:** `.font(.system(size: X, weight: .bold))` — plain SF Pro (no design modifier) approximates Josefin Sans (geometric sans). **Do not use `design: .serif`** — that was approximating the old Playfair Display.
 - **Body:** `.font(.system(size: X, weight: .regular))` — system sans approximates DM Sans
-- **BrandMark:** `.font(.system(size: 11, weight: .medium))` + `.tracking(2.75)` — no design modifier (plain sans)
+- **BrandMark:** `.font(.system(size: 11, weight: .medium, design: .serif))` + `.tracking(2.75)` — system serif (New York) approximates Fraunces
+
+> To use the exact web fonts, embed `JosefinSans-Bold.ttf` / `JosefinSans-SemiBold.ttf` and `Fraunces-Medium.ttf` as custom fonts in the Xcode project and register them in Info.plist. The system font approximations above are acceptable for pre-TestFlight builds.
 
 ---
 
 ## Wordmark
 
-**"TINY FOOD TOUR"** — always all-caps, wide letter-spacing, DM Sans / system sans, medium weight, `Foreground` color.
+**"TINY FOOD TOUR"** — always all-caps, wide letter-spacing, Fraunces / system serif approximation, medium weight, `Foreground` color.
 
 - The brand quirk is a lowercase `i` in the logo PNG ("TiNY") but text rendering shows all-caps.
-- Never render the BrandMark in serif or in multiple colors — that's the logo PNG treatment only.
+- The BrandMark renders in a serif display face (Fraunces / system serif) — **not** the plain sans that body copy uses.
 - Used at 11pt in navs/headers; scale up for hero contexts (13–15pt max).
 
 ```swift

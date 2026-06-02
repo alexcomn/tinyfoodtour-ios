@@ -223,7 +223,7 @@ struct StopDetailView: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(stop.name)
-                            .font(.system(size: 22, weight: .bold, design: .serif))
+                            .font(.system(size: 22, weight: .bold))
                         Text([stop.cuisine_type, stop.price_level.map { String(repeating: "$", count: max(1, $0)) }]
                         .compactMap { $0 }.joined(separator: " · "))
                             .font(.system(size: 14))
@@ -413,7 +413,7 @@ struct CompletionCardView: View {
             BrandMarkView(fontSize: 20)
                 .padding(.top, 32)
             Text("You conquered today's\nTiNY FOOD TOUR!")
-                .font(.system(size: 26, weight: .bold, design: .serif))
+                .font(.system(size: 26, weight: .bold))
                 .multilineTextAlignment(.center)
             Text("Every stop in \(tour.neighborhood), on foot.")
                 .font(.system(size: 15))

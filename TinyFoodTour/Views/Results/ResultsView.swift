@@ -151,7 +151,7 @@ struct ResultsView: View {
                 .padding(.bottom, 12)
 
             Text(tour.displayTitle)
-                .font(.system(size: 30, weight: .bold, design: .serif))
+                .font(.system(size: 30, weight: .bold))
                 .foregroundColor(Color("Primary"))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 6)
@@ -456,7 +456,7 @@ struct StopCard: View {
                         .foregroundColor(stopColor)
 
                     Text(stop.name)
-                        .font(.system(size: 17, weight: .semibold, design: .serif))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
                         .fixedSize(horizontal: false, vertical: true)
                 }
