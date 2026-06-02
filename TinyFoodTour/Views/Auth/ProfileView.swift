@@ -78,7 +78,7 @@ struct ProfileView: View {
             if vm.editingDisplayName {
                 HStack(spacing: 8) {
                     TextField("Your name", text: $vm.displayNameDraft)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(TFTFont.heading(20, weight: .semibold))
                         .foregroundColor(Color("Foreground"))
                         .submitLabel(.done)
                         .onSubmit {
@@ -103,7 +103,7 @@ struct ProfileView: View {
                     Text(vm.displayName.isEmpty
                          ? (authVM.currentUser?.email?.components(separatedBy: "@").first ?? "Traveller")
                          : vm.displayName)
-                        .font(.system(size: 22, weight: .bold))
+                        .font(TFTFont.heading(22, weight: .bold))
                         .foregroundColor(Color("Foreground"))
                     Button {
                         vm.displayNameDraft = vm.displayName
@@ -144,7 +144,7 @@ struct ProfileView: View {
     private func statPill(value: Int, label: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text("\(value)")
-                .font(.system(size: 22, weight: .bold))
+                .font(TFTFont.heading(22, weight: .bold))
                 .foregroundColor(Color("Primary"))
             Text(label)
                 .font(.system(size: 11))

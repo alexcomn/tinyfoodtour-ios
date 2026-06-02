@@ -8,7 +8,7 @@ struct BrandMarkView: View {
 
     var body: some View {
         Text("TINY FOOD TOUR")
-            .font(.system(size: fontSize, weight: .medium, design: .serif))
+            .font(TFTFont.wordmark(fontSize))   // Fraunces-Medium (bundled)
             .tracking(fontSize * 0.25)
             .foregroundColor(Color("Foreground"))
     }

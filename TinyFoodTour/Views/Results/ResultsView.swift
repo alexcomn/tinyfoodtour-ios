@@ -63,46 +63,46 @@ struct ResultsView: View {
     }
 
     private var resultsContent: some View {
-        // Plain VStack: nav row on top, ScrollView below.
-        // .safeAreaInset in iOS 26 applies adaptive horizontal content margins
-        // to the ScrollView which shifts content left. A VStack has no such side effect.
-        VStack(spacing: 0) {
-            navRow
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 0) {
-                    header
-                    mapSection
+        // ScrollView is the ROOT view so it gets the full screen height and scrolls
+        // reliably. navRow is placed via .safeAreaInset, which reserves vertical space
+        // at the top and insets the scroll content below it (the idiomatic pattern).
+        // The horizontal-shift issue that previously made this look broken was the
+        // over-wide photo strip, not safeAreaInset — that is now fixed.
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 0) {
+                header
+                mapSection
 
-                    if stops.isEmpty {
-                        emptyStopsView
-                    } else {
-                        VStack(spacing: 12) {
-                            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                                StopCard(
-                                    stop: stop,
-                                    tourId: currentTour.id,
-                                    index: idx,
-                                    total: stops.count,
-                                    mealType: currentTour.mealType,
-                                    vibes: currentTour.vibe,
-                                    isFirst: idx == 0,
-                                    isShuffling: shufflingIndex == idx,
-                                    onStartHere: { showLiveTour = true },
-                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                                )
-                            }
+                if stops.isEmpty {
+                    emptyStopsView
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                            StopCard(
+                                stop: stop,
+                                tourId: currentTour.id,
+                                index: idx,
+                                total: stops.count,
+                                mealType: currentTour.mealType,
+                                vibes: currentTour.vibe,
+                                isFirst: idx == 0,
+                                isShuffling: shufflingIndex == idx,
+                                onStartHere: { showLiveTour = true },
+                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                            )
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
                     }
-
-                    actionBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
                 }
-                .frame(maxWidth: .infinity)
+
+                actionBar
             }
+            .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
+        .safeAreaInset(edge: .top, spacing: 0) { navRow }
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
         .onChange(of: tweakVM.tour) { _, newTour in
@@ -151,7 +151,7 @@ struct ResultsView: View {
                 .padding(.bottom, 12)
 
             Text(tour.displayTitle)
-                .font(.system(size: 30, weight: .bold))
+                .font(TFTFont.heading(30, weight: .bold))
                 .foregroundColor(Color("Primary"))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 6)
@@ -456,7 +456,7 @@ struct StopCard: View {
                         .foregroundColor(stopColor)
 
                     Text(stop.name)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(TFTFont.heading(17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
                         .fixedSize(horizontal: false, vertical: true)
                 }

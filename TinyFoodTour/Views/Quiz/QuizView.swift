@@ -76,7 +76,7 @@ struct QuizView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(vm.currentTitle)
-                        .font(.system(size: 26, weight: .bold))
+                        .font(TFTFont.heading(26, weight: .bold))
                         .foregroundColor(Color("Foreground"))
                         .padding(.horizontal, 20)
                         .padding(.top, 4)

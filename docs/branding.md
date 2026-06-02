@@ -44,12 +44,26 @@ Used for map markers, circle badges, and stop labels. Always use in this exact o
 - **Body:** `font-body` → DM Sans (sans), weights 300–700
 - **Wordmark:** **Fraunces** (display serif), uppercase, letter-spacing 0.25em, weight 500
 
-### iOS (SwiftUI)
-- **Headings:** `.font(.system(size: X, weight: .bold))` — plain SF Pro (no design modifier) approximates Josefin Sans (geometric sans). **Do not use `design: .serif`** — that was approximating the old Playfair Display.
-- **Body:** `.font(.system(size: X, weight: .regular))` — system sans approximates DM Sans
-- **BrandMark:** `.font(.system(size: 11, weight: .medium, design: .serif))` + `.tracking(2.75)` — system serif (New York) approximates Fraunces
+### iOS (SwiftUI) — actual brand fonts are now bundled
+The real Google Fonts TTFs ship in `TinyFoodTour/Fonts/` and are registered in
+Info.plist (`UIAppFonts`). Use the `TFTFont` helper — never `.system()` — for
+headings and the wordmark:
 
-> To use the exact web fonts, embed `JosefinSans-Bold.ttf` / `JosefinSans-SemiBold.ttf` and `Fraunces-Medium.ttf` as custom fonts in the Xcode project and register them in Info.plist. The system font approximations above are acceptable for pre-TestFlight builds.
+- **Headings:** `.font(TFTFont.heading(size, weight:))` → Josefin Sans
+  (`JosefinSans-Medium` / `-SemiBold` / `-Bold` by weight)
+- **Wordmark:** `.font(TFTFont.wordmark(size))` → `Fraunces-Medium`
+- **Body:** `.font(.system(size: X))` — SF Pro (DM Sans not bundled; system sans is fine for body)
+
+Bundled font files and their PostScript names (verified to resolve at runtime):
+| File | PostScript name | Used for |
+|---|---|---|
+| `JosefinSans-Medium.ttf` | `JosefinSans-Medium` | `.medium` headings |
+| `JosefinSans-SemiBold.ttf` | `JosefinSans-SemiBold` | `.semibold` headings |
+| `JosefinSans-Bold.ttf` | `JosefinSans-Bold` | `.bold` headings |
+| `Fraunces-Medium.ttf` | `Fraunces-Medium` | the wordmark |
+
+> When adding a Swift file OR font, run `python3 generate_xcodeproj.py` — the
+> generator wires fonts into the Resources build phase and `UIAppFonts`.
 
 ---
 

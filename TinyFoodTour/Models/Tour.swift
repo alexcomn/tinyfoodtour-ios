@@ -187,31 +187,39 @@ struct Tour: Codable, Identifiable, Equatable {
                 let nextIdx = remaining.indices.min(by: { dist(last, remaining[$0]) < dist(last, remaining[$1]) })!
                 route.append(remaining.remove(at: nextIdx))
             }
-            let total = zip(route, route.dropFirst()).map { dist($0, $1) }.reduce(0, +)
+            var total = zip(route, route.dropFirst()).map { dist($0, $1) }.reduce(0, +)
+            // Critically, include the leg from the last mobile stop to the pinned
+            // final stop (dessert). Without this, the chosen ordering can end far
+            // from the dessert, forcing the walker to double back to reach it.
+            if let p = pinned, let last = route.last { total += dist(last, p) }
             if total < bestDist { bestDist = total; bestRoute = route }
         }
 
-        // Re-number stop_number in order (preserve stop_type)
-        var result = bestRoute.enumerated().map { i, s in
-            TourStop(stop_number: i + 1, stop_type: s.stop_type, place_id: s.place_id,
-                     name: s.name, address: s.address, lat: s.lat, lng: s.lng,
-                     cuisine_type: s.cuisine_type, cuisine_label: s.cuisine_label,
-                     price_level: s.price_level, website_url: s.website_url,
-                     menu_url: s.menu_url, google_maps_url: s.google_maps_url,
-                     description: s.description, walk_time_from_previous: s.walk_time_from_previous,
-                     rating: s.rating, photos: s.photos, opening_hours: s.opening_hours)
+        // Final ordered list (mobile route + pinned final stop)
+        var ordered = bestRoute
+        if let p = pinned { ordered.append(p) }
+
+        // Re-number and recompute walk_time_from_previous for the NEW order.
+        // The server's Directions times were for its original ordering; after we
+        // reorder they would be attached to the wrong legs. A haversine estimate
+        // (~80 m/min walking) keeps the displayed times consistent with the drawn path.
+        return ordered.enumerated().map { i, s in
+            let walkText: String
+            if i == 0 {
+                walkText = "Starting point"
+            } else {
+                let meters = dist(ordered[i - 1], s)
+                let mins = max(1, Int((meters / 80).rounded()))
+                walkText = "\(mins) min walk"
+            }
+            return TourStop(stop_number: i + 1, stop_type: s.stop_type, place_id: s.place_id,
+                            name: s.name, address: s.address, lat: s.lat, lng: s.lng,
+                            cuisine_type: s.cuisine_type, cuisine_label: s.cuisine_label,
+                            price_level: s.price_level, website_url: s.website_url,
+                            menu_url: s.menu_url, google_maps_url: s.google_maps_url,
+                            description: s.description, walk_time_from_previous: walkText,
+                            rating: s.rating, photos: s.photos, opening_hours: s.opening_hours)
         }
-        if var p = pinned {
-            p = TourStop(stop_number: result.count + 1, stop_type: p.stop_type, place_id: p.place_id,
-                         name: p.name, address: p.address, lat: p.lat, lng: p.lng,
-                         cuisine_type: p.cuisine_type, cuisine_label: p.cuisine_label,
-                         price_level: p.price_level, website_url: p.website_url,
-                         menu_url: p.menu_url, google_maps_url: p.google_maps_url,
-                         description: p.description, walk_time_from_previous: p.walk_time_from_previous,
-                         rating: p.rating, photos: p.photos, opening_hours: p.opening_hours)
-            result.append(p)
-        }
-        return result
     }
 }
 
