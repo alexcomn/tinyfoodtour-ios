@@ -531,27 +531,32 @@ struct StopCard: View {
             .padding(.horizontal, 16)
             .padding(.top, 8)
 
-            // ── Photo strip — fixed HStack (no nested scroll to conflict
-            //    with the parent vertical ScrollView's gesture recogniser) ──────
+            // ── Photo strip — horizontal ScrollView ──────────────────────────
+            // MUST be a ScrollView, not a fixed HStack: 4×100pt images = 424pt is
+            // wider than the screen. A fixed HStack reports that 424pt as its layout
+            // width (.clipped only clips rendering), forcing the entire card column
+            // wider than the viewport → left-edge clipping + broken vertical scroll.
+            // A horizontal ScrollView bounds its layout width to what's available
+            // and scrolls internally for the overflow.
             if let photos = stop.photos, !photos.isEmpty {
-                HStack(spacing: 8) {
-                    ForEach(photos.prefix(4), id: \.self) { url in
-                        AsyncImage(url: URL(string: url)) { phase in
-                            switch phase {
-                            case .success(let img): img.resizable().scaledToFill()
-                            case .failure:          Color("CreamDark")
-                            default:                Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(photos.prefix(4), id: \.self) { url in
+                            AsyncImage(url: URL(string: url)) { phase in
+                                switch phase {
+                                case .success(let img): img.resizable().scaledToFill()
+                                case .failure:          Color("CreamDark")
+                                default:                Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
+                                }
                             }
+                            .frame(width: 100, height: 72)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
                         }
-                        .frame(width: 100, height: 72)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
                     }
-                    Spacer(minLength: 0)
+                    .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 16)
                 .padding(.top, 10)
-                .clipped()
             }
 
             // ── Divider + description + link button ──────────────────────────
