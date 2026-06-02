@@ -1,27 +1,29 @@
 import SwiftUI
 import UIKit
 
-/// Presents a SwiftUI view using UIKit's .fullScreen modal with .crossDissolve —
-/// bypasses iOS 26's zoom presentation animation which leaves views in an offset/scaled
-/// coordinate state. UIKit .fullScreen guarantees the view fills screen bounds exactly.
+/// Presents a SwiftUI view by finding the topmost UIViewController in the key
+/// window and calling present(_:animated:false) directly — no SwiftUI presentation
+/// layer, no iOS 26 zoom animation, no coordinate transform residue.
 struct FullScreenPresenter<Content: View>: UIViewControllerRepresentable {
     @Binding var isPresented: Bool
     let content: () -> Content
 
     func makeUIViewController(context: Context) -> UIViewController {
-        UIViewController()
+        UIViewController()  // zero-size anchor; actual presentation is from window root
     }
 
     func updateUIViewController(_ uiVC: UIViewController, context: Context) {
-        if isPresented && uiVC.presentedViewController == nil {
+        if isPresented && context.coordinator.hosted == nil {
+            guard let presenter = topViewController() else { return }
             let host = UIHostingController(rootView: content())
             host.modalPresentationStyle = .fullScreen
-            host.modalTransitionStyle = .crossDissolve   // fade, not zoom
-            host.view.backgroundColor = .clear
+            // animated: FALSE — any animation in iOS 26 (even crossDissolve)
+            // can apply a residual coordinate transform. Instant transition = clean slate.
+            host.view.frame = UIScreen.main.bounds
             context.coordinator.hosted = host
-            uiVC.present(host, animated: true)
-        } else if !isPresented, let presented = uiVC.presentedViewController {
-            presented.dismiss(animated: true) {
+            presenter.present(host, animated: false)
+        } else if !isPresented, let host = context.coordinator.hosted {
+            host.dismiss(animated: false) {
                 context.coordinator.hosted = nil
             }
         }
@@ -32,11 +34,21 @@ struct FullScreenPresenter<Content: View>: UIViewControllerRepresentable {
     class Coordinator {
         var hosted: UIHostingController<Content>?
     }
+
+    /// Walk the key window's view controller hierarchy to find the topmost presenter.
+    private func topViewController() -> UIViewController? {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+              let window = scene.windows.first(where: { $0.isKeyWindow }),
+              let root = window.rootViewController else { return nil }
+        var top = root
+        while let presented = top.presentedViewController { top = presented }
+        return top
+    }
 }
 
 extension View {
-    /// Present a full-screen view using UIKit .crossDissolve — avoids iOS 26 zoom
-    /// animation coordinate offset that affects both fullScreenCover and NavigationStack.
     func uiFullScreen<Content: View>(
         isPresented: Binding<Bool>,
         @ViewBuilder content: @escaping () -> Content
