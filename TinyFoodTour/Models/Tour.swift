@@ -73,23 +73,25 @@ struct Tour: Codable, Identifiable, Equatable {
     let created_at: String
     let user_id: String?
     let share_token: String
-    // Extracted from the _meta synthetic stop (§4.8 brief)
+    // Extracted from the _meta synthetic stop (§4.8 quiz-and-tour-logic-brief.md)
     let tourTitle: String?
     let totalDistanceMiles: Double?
-    /// Relaxations fired during generation (§7 brief). When "allowed_visited" is present
-    /// the UI shows the "We stretched a bit" notice in Results.
+    /// Relaxations fired during generation. "allowed_visited" → show stretched-tour notice.
     let relaxations: [String]
+    /// The meal_type that drove this tour's progression (§4.8 brief).
+    /// Used to key the correct stop labels in StopLabel.labels(mealType:vibes:count:).
+    let mealType: String?
 
     init(id: String, neighborhood: String, vibe: [String], dietary: [String],
          walk_distance: String, stops: [TourStop], created_at: String,
          user_id: String?, share_token: String,
          tourTitle: String? = nil, totalDistanceMiles: Double? = nil,
-         relaxations: [String] = []) {
+         relaxations: [String] = [], mealType: String? = nil) {
         self.id = id; self.neighborhood = neighborhood; self.vibe = vibe
         self.dietary = dietary; self.walk_distance = walk_distance; self.stops = stops
         self.created_at = created_at; self.user_id = user_id; self.share_token = share_token
         self.tourTitle = tourTitle; self.totalDistanceMiles = totalDistanceMiles
-        self.relaxations = relaxations
+        self.relaxations = relaxations; self.mealType = mealType
     }
 
     init(from decoder: Decoder) throws {
@@ -108,14 +110,16 @@ struct Tour: Codable, Identifiable, Equatable {
         var extractedTitle: String? = nil
         var extractedMiles: Double? = nil
         var extractedRelaxations: [String] = []
+        var extractedMealType: String? = nil
         if let raw = try? c.decode(AnyCodable.self, forKey: .stops),
            let arr = raw.value as? [[String: Any]] {
-            // Pull metadata from the _meta stop (§4.8 brief: tour_title, total_distance_miles, relaxations)
+            // Pull metadata from the _meta stop (§4.8 brief)
             if let metaStop = arr.first(where: { $0["_meta"] as? Bool == true }),
                let meta = metaStop["_meta"] as? [String: Any] {
                 extractedTitle = meta["tour_title"] as? String
                 extractedMiles = meta["total_distance_miles"] as? Double
                 extractedRelaxations = (meta["relaxations"] as? [String]) ?? []
+                extractedMealType = meta["meal_type"] as? String  // §4.8: persisted for label keying
             }
             let decoded = arr
                 .filter { $0["_meta"] as? Bool != true }
@@ -130,6 +134,7 @@ struct Tour: Codable, Identifiable, Equatable {
         tourTitle = extractedTitle
         totalDistanceMiles = extractedMiles
         relaxations = extractedRelaxations
+        mealType = extractedMealType
     }
 
     /// Display title: AI-generated tour title from _meta, fallback to neighborhood
@@ -144,9 +149,9 @@ struct Tour: Codable, Identifiable, Equatable {
     static func reorderLinear(_ stops: [TourStop]) -> [TourStop] {
         guard stops.count > 1 else { return stops }
 
-        let dessertTypes: Set<String> = ["dessert", "sweet finish", "sweet_finish"]
+        // Pin any "final" stop type last — extended per §4.2 brief to cover all progressions
         let dessertIdx = stops.indices.last(where: {
-            dessertTypes.contains(stops[$0].stop_type.lowercased())
+            StopLabel.finalStopTypes.contains(stops[$0].stop_type.lowercased())
         })
 
         var mobile = stops

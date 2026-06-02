@@ -67,6 +67,7 @@ struct ResultsView: View {
                                 tourId: currentTour.id,
                                 index: idx,
                                 total: stops.count,
+                                mealType: currentTour.mealType,
                                 vibes: currentTour.vibe,
                                 isFirst: idx == 0,
                                 isShuffling: shufflingIndex == idx,
@@ -372,6 +373,7 @@ struct StopCard: View {
     let tourId: String           // for menu_items DB lookup
     let index: Int
     let total: Int
+    let mealType: String?
     let vibes: [String]
     let isFirst: Bool
     let isShuffling: Bool
@@ -379,7 +381,7 @@ struct StopCard: View {
     let onShuffle: (() -> Void)?
 
     private var stopColor: Color { StopLabel.color(index: index) }
-    private var stopLabel: String { StopLabel.label(index: index, total: total, vibes: vibes) }
+    private var stopLabel: String { StopLabel.label(index: index, total: total, mealType: mealType, vibes: vibes) }
 
     // cuisine_label preferred; fall back to cleaned cuisine_type
     private var cuisineDisplay: String {
@@ -396,13 +398,27 @@ struct StopCard: View {
         return String(repeating: "$", count: p)
     }
 
-    // Today's hours extracted from opening_hours array
+    // Today's hours — shows "Closed · Reopens [day] HH:MM AM/PM" per tone brief §3
     private var todaysHours: String? {
         guard let hours = stop.opening_hours, !hours.isEmpty else { return nil }
         let days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
-        let today = days[Calendar.current.component(.weekday, from: Date()) - 1]
+        let weekday = Calendar.current.component(.weekday, from: Date()) - 1  // 0=Sun
+        let today = days[weekday]
         guard let line = hours.first(where: { $0.hasPrefix(today) }) else { return nil }
-        return line.replacingOccurrences(of: "\(today): ", with: "")
+        let hoursStr = line.replacingOccurrences(of: "\(today): ", with: "")
+        guard hoursStr == "Closed" else { return hoursStr }
+        // Find the next day the stop is open and show its opening time
+        for offset in 1...7 {
+            let nextDay = days[(weekday + offset) % 7]
+            if let nextLine = hours.first(where: { $0.hasPrefix(nextDay) }) {
+                let nextHours = nextLine.replacingOccurrences(of: "\(nextDay): ", with: "")
+                if nextHours != "Closed", let openTime = nextHours.components(separatedBy: " – ").first {
+                    let label = offset == 1 ? "tomorrow" : nextDay
+                    return "Closed · Reopens \(label) \(openTime)"
+                }
+            }
+        }
+        return "Closed"
     }
 
     var body: some View {
@@ -493,8 +509,8 @@ struct StopCard: View {
                         Image(systemName: "clock")
                             .font(.system(size: 9))
                         Text(hours)
-                            .foregroundColor(hours == "Closed" ? Color.red : Color("SlateMid").opacity(0.8))
-                            .fontWeight(hours == "Closed" ? .semibold : .regular)
+                            .foregroundColor(hours.hasPrefix("Closed") ? Color.red : Color("SlateMid").opacity(0.8))
+                            .fontWeight(hours.hasPrefix("Closed") ? .semibold : .regular)
                     }
                 }
             }

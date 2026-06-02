@@ -78,6 +78,8 @@ struct LiveTourView: View {
                         stop: stop,
                         allStops: tour.stops,
                         tourId: tourId,
+                        mealType: tour.mealType,
+                        vibes: tour.vibe,
                         index: vm.currentStopIndex,
                         total: tour.stops.count,
                         completedIndices: Set(vm.progress.indices.filter { vm.progress[$0].completed }),
@@ -180,6 +182,8 @@ struct StopDetailView: View {
     let stop: TourStop
     let allStops: [TourStop]
     let tourId: String
+    let mealType: String?
+    let vibes: [String]
     let index: Int
     let total: Int
     let completedIndices: Set<Int>
@@ -205,7 +209,7 @@ struct StopDetailView: View {
     }
 
     var stopColor: Color { StopLabel.color(index: index) }
-    var label: String { StopLabel.label(index: index, total: total) }
+    var label: String { StopLabel.label(index: index, total: total, mealType: mealType, vibes: vibes) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
