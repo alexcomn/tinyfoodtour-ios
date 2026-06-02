@@ -1,25 +1,28 @@
 import SwiftUI
 
-// Brand fonts (ios-branding-brief.md §1):
-//   Headings → Josefin Sans (geometric sans), weights 500/600/700
-//   Wordmark → Fraunces (display serif), weight 500
-// The actual TTFs are bundled (TinyFoodTour/Fonts) and registered in Info.plist
-// (UIAppFonts). Use these helpers instead of .system() for any heading/wordmark.
+// Brand fonts — source of truth is tinyfoodtour.com (verified via computed styles):
+//   Headings → Josefin Sans, weight 400 (Regular). Every heading on the site is w400.
+//   Wordmark → Josefin Sans, weight 500 (Medium). The site uses Josefin Sans for the
+//              wordmark, NOT Fraunces (the older brief was out of date).
+// TTFs are bundled (TinyFoodTour/Fonts) and registered in Info.plist (UIAppFonts).
+// Use these helpers instead of .system() for any heading or the wordmark.
 enum TFTFont {
 
-    /// Josefin Sans heading. Maps a SwiftUI weight to the closest bundled static face.
-    static func heading(_ size: CGFloat, weight: Font.Weight = .bold) -> Font {
+    /// Josefin Sans heading. The website renders ALL headings at weight 400, so the
+    /// default is Regular. Heavier weights are available if a specific surface needs one.
+    static func heading(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         let name: String
         switch weight {
-        case .medium:                 name = "JosefinSans-Medium"
-        case .semibold:               name = "JosefinSans-SemiBold"
-        default:                      name = "JosefinSans-Bold"   // .bold and heavier
+        case .bold, .heavy, .black: name = "JosefinSans-Bold"
+        case .semibold:             name = "JosefinSans-SemiBold"
+        case .medium:               name = "JosefinSans-Medium"
+        default:                    name = "JosefinSans-Regular"  // matches the website
         }
         return .custom(name, size: size)
     }
 
-    /// Fraunces wordmark (display serif), weight 500.
+    /// Wordmark "TiNY FOOD TOUR" — Josefin Sans Medium (500), matching the live site.
     static func wordmark(_ size: CGFloat) -> Font {
-        .custom("Fraunces-Medium", size: size)
+        .custom("JosefinSans-Medium", size: size)
     }
 }

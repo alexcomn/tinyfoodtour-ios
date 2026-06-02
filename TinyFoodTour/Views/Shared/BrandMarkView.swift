@@ -1,15 +1,14 @@
 import SwiftUI
 
-// Wordmark font: Fraunces (display serif) per ios-branding-brief.md §1.
-// iOS approximation: .system(design: .serif) — New York display serif.
-// Tracking 0.25em, uppercase, medium weight.
+// Wordmark — matches tinyfoodtour.com (source of truth):
+// Josefin Sans Medium (500), uppercase, letter-spacing ~0.14em (1.96px @ 14px).
 struct BrandMarkView: View {
     var fontSize: CGFloat = 11
 
     var body: some View {
         Text("TINY FOOD TOUR")
-            .font(TFTFont.wordmark(fontSize))   // Fraunces-Medium (bundled)
-            .tracking(fontSize * 0.25)
+            .font(TFTFont.wordmark(fontSize))   // JosefinSans-Medium (bundled)
+            .tracking(fontSize * 0.14)
             .foregroundColor(Color("Foreground"))
     }
 }

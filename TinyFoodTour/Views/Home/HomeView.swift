@@ -29,7 +29,7 @@ struct HomeView: View {
 
                         // Headline — matches web "Every neighborhood is a menu."
                         Text("Every neighborhood\nis a menu.")
-                            .font(TFTFont.heading(34, weight: .bold))
+                            .font(TFTFont.heading(34))
                             .foregroundColor(Color("Foreground"))
                             .lineSpacing(2)
                             .padding(.bottom, 14)
@@ -60,7 +60,7 @@ struct HomeView: View {
                         Divider()
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Past Tours")
-                                .font(TFTFont.heading(18, weight: .semibold))
+                                .font(TFTFont.heading(18))
                                 .foregroundColor(Color("TFTSlate"))
                                 .padding(.horizontal, 20)
                                 .padding(.top, 28)

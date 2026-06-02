@@ -16,7 +16,7 @@ struct AuthView: View {
                         .padding(.top, 32)
 
                     Text(isSignUp ? "Create an account" : "Welcome back")
-                        .font(TFTFont.heading(24, weight: .bold))
+                        .font(TFTFont.heading(24))
 
                     VStack(spacing: 14) {
                         TextField("Email", text: $email)

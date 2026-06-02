@@ -44,23 +44,26 @@ Used for map markers, circle badges, and stop labels. Always use in this exact o
 - **Body:** `font-body` → DM Sans (sans), weights 300–700
 - **Wordmark:** **Fraunces** (display serif), uppercase, letter-spacing 0.25em, weight 500
 
-### iOS (SwiftUI) — actual brand fonts are now bundled
-The real Google Fonts TTFs ship in `TinyFoodTour/Fonts/` and are registered in
-Info.plist (`UIAppFonts`). Use the `TFTFont` helper — never `.system()` — for
-headings and the wordmark:
+### iOS (SwiftUI) — actual brand fonts are bundled
+Source of truth is **tinyfoodtour.com** (verified via computed styles). Both
+headings AND the wordmark use **Josefin Sans** — Fraunces is NOT used anywhere
+(the older brief was out of date). The real Google Fonts TTFs ship in
+`TinyFoodTour/Fonts/` and are registered in Info.plist (`UIAppFonts`). Use the
+`TFTFont` helper — never `.system()` — for headings and the wordmark:
 
-- **Headings:** `.font(TFTFont.heading(size, weight:))` → Josefin Sans
-  (`JosefinSans-Medium` / `-SemiBold` / `-Bold` by weight)
-- **Wordmark:** `.font(TFTFont.wordmark(size))` → `Fraunces-Medium`
-- **Body:** `.font(.system(size: X))` — SF Pro (DM Sans not bundled; system sans is fine for body)
+- **Headings:** `.font(TFTFont.heading(size))` → Josefin Sans **Regular (400)**.
+  The website renders every heading at weight 400 — do not use bold/semibold.
+- **Wordmark:** `.font(TFTFont.wordmark(size))` → Josefin Sans **Medium (500)**,
+  uppercase, tracking ≈ 0.14em (matches the site's 1.96px @ 14px).
+- **Body:** `.font(.system(size: X))` — SF Pro (DM Sans not bundled; fine for body)
 
-Bundled font files and their PostScript names (verified to resolve at runtime):
+Bundled font files (verified to resolve by PostScript name at runtime):
 | File | PostScript name | Used for |
 |---|---|---|
-| `JosefinSans-Medium.ttf` | `JosefinSans-Medium` | `.medium` headings |
-| `JosefinSans-SemiBold.ttf` | `JosefinSans-SemiBold` | `.semibold` headings |
-| `JosefinSans-Bold.ttf` | `JosefinSans-Bold` | `.bold` headings |
-| `Fraunces-Medium.ttf` | `Fraunces-Medium` | the wordmark |
+| `JosefinSans-Regular.ttf` | `JosefinSans-Regular` | all headings (default) + headline body |
+| `JosefinSans-Medium.ttf` | `JosefinSans-Medium` | the wordmark |
+| `JosefinSans-SemiBold.ttf` | `JosefinSans-SemiBold` | available if a surface needs it |
+| `JosefinSans-Bold.ttf` | `JosefinSans-Bold` | available if a surface needs it |
 
 > When adding a Swift file OR font, run `python3 generate_xcodeproj.py` — the
 > generator wires fonts into the Resources build phase and `UIAppFonts`.

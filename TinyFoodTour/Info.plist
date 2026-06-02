@@ -27,10 +27,10 @@
 	<true/>
 	<key>UIAppFonts</key>
 	<array>
+		<string>JosefinSans-Regular.ttf</string>
 		<string>JosefinSans-Medium.ttf</string>
 		<string>JosefinSans-SemiBold.ttf</string>
 		<string>JosefinSans-Bold.ttf</string>
-		<string>Fraunces-Medium.ttf</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tiny Food Tour uses your location to find nearby neighborhoods to explore.</string>

@@ -63,46 +63,51 @@ struct ResultsView: View {
     }
 
     private var resultsContent: some View {
-        // ScrollView is the ROOT view so it gets the full screen height and scrolls
-        // reliably. navRow is placed via .safeAreaInset, which reserves vertical space
-        // at the top and insets the scroll content below it (the idiomatic pattern).
-        // The horizontal-shift issue that previously made this look broken was the
-        // over-wide photo strip, not safeAreaInset — that is now fixed.
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 0) {
-                header
-                mapSection
+        // GeometryReader gives the ScrollView an EXPLICIT bounded height (geo.size.height).
+        // Without an explicit bound, a ScrollView in a conditionally-rendered view nested
+        // several navigationDestinations deep can size itself to its content height and
+        // therefore never scroll. Framing it to the geometry size guarantees scrolling
+        // whenever content overflows. navRow floats via .overlay (no layout/scroll impact).
+        GeometryReader { geo in
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(spacing: 0) {
+                    Color.clear.frame(height: 56)   // reserve room for the floating navRow
+                    header
+                    mapSection
 
-                if stops.isEmpty {
-                    emptyStopsView
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                            StopCard(
-                                stop: stop,
-                                tourId: currentTour.id,
-                                index: idx,
-                                total: stops.count,
-                                mealType: currentTour.mealType,
-                                vibes: currentTour.vibe,
-                                isFirst: idx == 0,
-                                isShuffling: shufflingIndex == idx,
-                                onStartHere: { showLiveTour = true },
-                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                            )
+                    if stops.isEmpty {
+                        emptyStopsView
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                                StopCard(
+                                    stop: stop,
+                                    tourId: currentTour.id,
+                                    index: idx,
+                                    total: stops.count,
+                                    mealType: currentTour.mealType,
+                                    vibes: currentTour.vibe,
+                                    isFirst: idx == 0,
+                                    isShuffling: shufflingIndex == idx,
+                                    onStartHere: { showLiveTour = true },
+                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                                )
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-                }
 
-                actionBar
+                    actionBar
+                }
+                .frame(width: geo.size.width)
             }
-            .frame(maxWidth: .infinity)
+            .frame(width: geo.size.width, height: geo.size.height)
+            .background(Color("Cream"))
+            .overlay(alignment: .top) { navRow }
         }
-        .background(Color("Cream"))
-        .safeAreaInset(edge: .top, spacing: 0) { navRow }
+        .ignoresSafeArea(edges: .bottom)
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
         .onChange(of: tweakVM.tour) { _, newTour in
@@ -151,7 +156,7 @@ struct ResultsView: View {
                 .padding(.bottom, 12)
 
             Text(tour.displayTitle)
-                .font(TFTFont.heading(30, weight: .bold))
+                .font(TFTFont.heading(30))
                 .foregroundColor(Color("Primary"))
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 6)
@@ -456,7 +461,7 @@ struct StopCard: View {
                         .foregroundColor(stopColor)
 
                     Text(stop.name)
-                        .font(TFTFont.heading(17, weight: .semibold))
+                        .font(TFTFont.heading(17))
                         .foregroundColor(Color("TFTSlate"))
                         .fixedSize(horizontal: false, vertical: true)
                 }
