@@ -9,12 +9,15 @@ struct ResultsView: View {
     let tour: Tour
     let isShared: Bool
     let generationParams: QuizAnswers?
+    /// Called when the back button is tapped in inline (non-sheet) presentation.
+    /// Nil = use environment dismiss (sheet/modal contexts).
+    var onBack: (() -> Void)? = nil
 
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) var dismiss
     @StateObject private var savedVM = SavedToursViewModel()
     @StateObject private var tweakVM = TourViewModel()
-    @State private var navigateToLive = false
+    @State private var showLiveTour = false
     @State private var isSaved = false
     @State private var currentTour: Tour
     @State private var shufflingIndex: Int? = nil
@@ -22,12 +25,12 @@ struct ResultsView: View {
     @State private var tweakStops: Double
     @State private var tweakPrice: Double
 
-    init(tour: Tour, isShared: Bool, generationParams: QuizAnswers?) {
+    init(tour: Tour, isShared: Bool, generationParams: QuizAnswers?, onBack: (() -> Void)? = nil) {
         self.tour = tour
         self.isShared = isShared
         self.generationParams = generationParams
+        self.onBack = onBack
         _currentTour = State(initialValue: tour)
-        // Initialise sliders to current tour values
         let stopCount = max(2, min(5, tour.stops.count))
         _tweakStops = State(initialValue: Double(stopCount))
         _tweakPrice = State(initialValue: 3)
@@ -49,9 +52,17 @@ struct ResultsView: View {
     }
 
     var body: some View {
-        // No NavigationStack, no .toolbar, no .navigationBarTitleDisplayMode.
-        // iOS 26 applies automatic content margin adjustments via those modifiers
-        // that shift ScrollView content left. We own all navigation chrome manually.
+        // LiveTourView shown inline — same reason as GeneratingView→ResultsView:
+        // any iOS 26 presentation adds a coordinate transform. Inline swap has none.
+        if showLiveTour {
+            LiveTourView(tourId: currentTour.id)
+                .environmentObject(authVM)
+        } else {
+            resultsContent
+        }
+    }
+
+    private var resultsContent: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 0) {
                 header
@@ -71,7 +82,7 @@ struct ResultsView: View {
                                 vibes: currentTour.vibe,
                                 isFirst: idx == 0,
                                 isShuffling: shufflingIndex == idx,
-                                onStartHere: { navigateToLive = true },
+                                onStartHere: { showLiveTour = true },
                                 onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
                             )
                         }
@@ -86,11 +97,11 @@ struct ResultsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
-        // safeAreaInset works correctly in a UIHostingController context (no iOS 26 SwiftUI
-        // presentation offset). Places the nav buttons in the top safe area cleanly.
         .safeAreaInset(edge: .top, spacing: 0) {
             HStack {
-                Button { dismiss() } label: {
+                Button {
+                    if let back = onBack { back() } else { dismiss() }
+                } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(Color("TFTSlate"))
@@ -122,12 +133,7 @@ struct ResultsView: View {
             if let t = newTour { currentTour = t; showTweaks = false }
         }
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
-            dismiss()
-        }
-        // LiveTour via UIKit .crossDissolve — consistent with Results presentation
-        .uiFullScreen(isPresented: $navigateToLive) {
-            LiveTourView(tourId: tour.id)
-                .environmentObject(authVM)
+            if let back = onBack { back() } else { dismiss() }
         }
     }
 
@@ -319,7 +325,7 @@ struct ResultsView: View {
         VStack(spacing: 12) {
             if !isShared {
                 Button {
-                    navigateToLive = true
+                    showLiveTour = true
                 } label: {
                     Text("Start my tour →")
                     .font(.system(size: 15, weight: .semibold))

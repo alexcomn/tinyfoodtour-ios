@@ -4,10 +4,31 @@ struct GeneratingView: View {
     let answers: QuizAnswers
     @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var vm = TourViewModel()
-    @State private var navigateToResults = false
+    @State private var showResults = false
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
+        // Show ResultsView inline (same NavigationStack level, same coordinate space).
+        // Any presentation mechanism in iOS 26 — fullScreenCover, UIKit modal,
+        // animated or not — carries a residual coordinate transform that shifts
+        // content beyond the viewport. Inline conditional rendering avoids all of it.
+        if showResults, let tour = vm.tour {
+            ResultsView(
+                tour: tour,
+                isShared: false,
+                generationParams: answers,
+                onBack: {
+                    // Unwind the whole stack back to HomeView
+                    NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
+                }
+            )
+            .environmentObject(authVM)
+        } else {
+            generatingContent
+        }
+    }
+
+    private var generatingContent: some View {
         ZStack {
             Color("Cream").ignoresSafeArea()
 
@@ -33,22 +54,9 @@ struct GeneratingView: View {
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             dismiss()
         }
-        // UIKit .fullScreen + .crossDissolve — no zoom animation, no coordinate transform,
-        // guaranteed correct frame. Replaces fullScreenCover which uses iOS 26's zoom
-        // animation that leaves views with a residual coordinate offset.
-        .uiFullScreen(isPresented: $navigateToResults) {
-            if let tour = vm.tour {
-                ResultsView(tour: tour, isShared: false, generationParams: answers)
-                    .environmentObject(authVM)
-            } else {
-                EmptyView()
-            }
-        }
         .task {
             await vm.generate(answers: answers)
-            if vm.tour != nil {
-                navigateToResults = true
-            }
+            if vm.tour != nil { showResults = true }
         }
     }
 
@@ -66,7 +74,7 @@ struct GeneratingView: View {
                 Button {
                     Task {
                         await vm.generate(answers: answers)
-                        if vm.tour != nil { navigateToResults = true }
+                        if vm.tour != nil { showResults = true }
                     }
                 } label: {
                     Text("Try again")
@@ -77,9 +85,7 @@ struct GeneratingView: View {
                         .background(Color("Primary"))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                Button {
-                    dismiss()
-                } label: {
+                Button { dismiss() } label: {
                     Text("Start over")
                         .font(.system(size: 14))
                         .padding(.horizontal, 20)
