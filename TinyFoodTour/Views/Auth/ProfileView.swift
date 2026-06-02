@@ -172,7 +172,7 @@ struct ProfileView: View {
                             renameDraft = profileTour.displayName
                             renamingToken = profileTour.shareToken
                         },
-                        onRemove: { vm.removeTour(token: profileTour.shareToken) }
+                        onRemove: { Task { await vm.removeTour(token: profileTour.shareToken, savedTourId: profileTour.savedTourId) } }
                     )
                 }
             }
@@ -272,9 +272,16 @@ struct SavedTourProfileRow: View {
                     Text(profileTour.displayName)
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(Color("Foreground"))
-                    Text("\(profileTour.stopCount) stop\(profileTour.stopCount == 1 ? "" : "s")")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color("SlateMid"))
+                    // Secondary line: stop count · date saved
+                    HStack(spacing: 4) {
+                        Text("\(profileTour.stopCount) stop\(profileTour.stopCount == 1 ? "" : "s")")
+                        if let date = profileTour.formattedDate {
+                            Text("·").foregroundColor(Color("SlateMid").opacity(0.5))
+                            Text(date)
+                        }
+                    }
+                    .font(.system(size: 12))
+                    .foregroundColor(Color("SlateMid"))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

@@ -372,10 +372,12 @@ struct ResultsView: View {
 
                 // Share + Save row
                 HStack(spacing: 16) {
-                    // Save bookmark
+                    // Save bookmark — writes to UserDefaults + Supabase when signed in
                     Button {
-                        savedVM.saveTour(token: currentTour.share_token)
-                        isSaved = true
+                        Task {
+                            await savedVM.saveTour(tour: currentTour, userId: authVM.currentUser?.id)
+                            isSaved = true
+                        }
                     } label: {
                         Label(isSaved ? "Saved!" : "Save tour",
                               systemImage: isSaved ? "bookmark.fill" : "bookmark")

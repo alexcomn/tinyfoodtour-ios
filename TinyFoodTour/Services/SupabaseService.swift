@@ -81,6 +81,17 @@ final class SupabaseService {
         try validateResponse(response, data: data)
     }
 
+    // MARK: - Delete
+    func delete(table: String, filters: [String: String]) async throws {
+        var components = URLComponents(string: "\(supabaseURL)/rest/v1/\(table)")!
+        components.queryItems = filters.map { URLQueryItem(name: $0.key, value: $0.value) }
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "DELETE"
+        baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateResponse(response, data: data)
+    }
+
     // MARK: - Edge Functions
     func invokeFunction<T: Decodable>(name: String, body: [String: Any]) async throws -> T {
         var request = URLRequest(url: URL(string: "\(supabaseURL)/functions/v1/\(name)")!)

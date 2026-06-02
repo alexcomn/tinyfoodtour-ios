@@ -128,11 +128,24 @@ final class SavedToursViewModel: ObservableObject {
         isLoading = false
     }
 
+    /// Local-only save (anonymous users or quick HomeView reload).
     func saveTour(token: String) {
         var tokens = savedTokens()
         guard !tokens.contains(token) else { return }
         tokens.insert(token, at: 0)
         UserDefaults.standard.set(Array(tokens.prefix(20)), forKey: storageKey)
+    }
+
+    /// Full save: writes to UserDefaults AND to Supabase saved_tours when signed in.
+    /// Uses tour.displayTitle as the name so the AI title persists cross-device.
+    func saveTour(tour: Tour, userId: String?) async {
+        saveTour(token: tour.share_token)
+        guard let uid = userId else { return }
+        try? await SupabaseService.shared.upsert(
+            table: "saved_tours",
+            body: ["user_id": uid, "tour_id": tour.id, "name": tour.displayTitle],
+            onConflict: "user_id,tour_id"
+        )
     }
 
     private func savedTokens() -> [String] {
