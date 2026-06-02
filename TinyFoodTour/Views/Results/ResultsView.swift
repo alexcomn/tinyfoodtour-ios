@@ -63,70 +63,46 @@ struct ResultsView: View {
     }
 
     private var resultsContent: some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 0) {
-                header
-                mapSection
+        // Plain VStack: nav row on top, ScrollView below.
+        // .safeAreaInset in iOS 26 applies adaptive horizontal content margins
+        // to the ScrollView which shifts content left. A VStack has no such side effect.
+        VStack(spacing: 0) {
+            navRow
+            ScrollView(.vertical, showsIndicators: true) {
+                VStack(spacing: 0) {
+                    header
+                    mapSection
 
-                if stops.isEmpty {
-                    emptyStopsView
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
-                            StopCard(
-                                stop: stop,
-                                tourId: currentTour.id,
-                                index: idx,
-                                total: stops.count,
-                                mealType: currentTour.mealType,
-                                vibes: currentTour.vibe,
-                                isFirst: idx == 0,
-                                isShuffling: shufflingIndex == idx,
-                                onStartHere: { showLiveTour = true },
-                                onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
-                            )
+                    if stops.isEmpty {
+                        emptyStopsView
+                    } else {
+                        VStack(spacing: 12) {
+                            ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                                StopCard(
+                                    stop: stop,
+                                    tourId: currentTour.id,
+                                    index: idx,
+                                    total: stops.count,
+                                    mealType: currentTour.mealType,
+                                    vibes: currentTour.vibe,
+                                    isFirst: idx == 0,
+                                    isShuffling: shufflingIndex == idx,
+                                    onStartHere: { showLiveTour = true },
+                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                                )
+                            }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-                }
 
-                actionBar
+                    actionBar
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
         }
         .background(Color("Cream"))
-        .safeAreaInset(edge: .top, spacing: 0) {
-            HStack {
-                Button {
-                    if let back = onBack { back() } else { dismiss() }
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(Color("TFTSlate"))
-                        .frame(width: 38, height: 38)
-                        .background(Color("Cream"))
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-                }
-                Spacer()
-                if !isShared {
-                    Button { showTweaks = true } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .font(.system(size: 15))
-                            .foregroundColor(Color("TFTSlate"))
-                            .frame(width: 38, height: 38)
-                            .background(Color("Cream"))
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color("Cream"))
-        }
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
         .onChange(of: tweakVM.tour) { _, newTour in
@@ -135,6 +111,37 @@ struct ResultsView: View {
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
             if let back = onBack { back() } else { dismiss() }
         }
+    }
+
+    private var navRow: some View {
+        HStack {
+            Button {
+                if let back = onBack { back() } else { dismiss() }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Color("TFTSlate"))
+                    .frame(width: 38, height: 38)
+                    .background(Color("Cream"))
+                    .clipShape(Circle())
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+            }
+            Spacer()
+            if !isShared {
+                Button { showTweaks = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 15))
+                        .foregroundColor(Color("TFTSlate"))
+                        .frame(width: 38, height: 38)
+                        .background(Color("Cream"))
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color("Cream"))
     }
 
     // MARK: - Header (bg-pizza-crust)
