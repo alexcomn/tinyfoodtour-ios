@@ -88,6 +88,7 @@ struct LiveTourView: View {
                         isFavorite: vm.favorites.contains(stop.place_id),
                         isSaving: vm.isSaving,
                         isUploading: vm.isUploading,
+                        isSignedIn: authVM.currentUser != nil,
                         onCheckOff: { Task { await vm.checkOff(userId: authVM.currentUser?.id) } },
                         onSaveNotes: { Task { await vm.saveNotes(userId: authVM.currentUser?.id) } },
                         onToggleFavorite: { Task { await vm.toggleFavorite(stop: stop, userId: authVM.currentUser?.id) } },
@@ -192,6 +193,7 @@ struct StopDetailView: View {
     let isFavorite: Bool
     let isSaving: Bool
     let isUploading: Bool
+    let isSignedIn: Bool          // gate photo uploads behind auth
     let onCheckOff: () -> Void
     let onSaveNotes: () -> Void
     let onToggleFavorite: () -> Void
@@ -200,6 +202,8 @@ struct StopDetailView: View {
     @State private var photoItem: PhotosPickerItem?
     @State private var showMenu = false
     @State private var showDirections = false
+    @State private var noteSaved = false       // brief "Saved!" confirmation
+    @FocusState private var notesFocused: Bool // keyboard dismiss
 
     private var menuURLString: String {
         if let m = stop.menu_url, !m.isEmpty { return m }
@@ -317,7 +321,7 @@ struct StopDetailView: View {
             .accessibilityLabel(progress.completed ? "Visited — tap to unmark" : "Mark \(stop.name) as visited")
             .padding(.horizontal, 20)
 
-            // Notes
+            // ── Notes ────────────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
                     .font(.system(size: 13, weight: .semibold))
@@ -331,43 +335,82 @@ struct StopDetailView: View {
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20)
+                    .focused($notesFocused)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") { notesFocused = false }
+                                .foregroundColor(Color("Primary"))
+                        }
+                    }
 
-                Button(action: onSaveNotes) {
-                    Text(isSaving ? "Saving…" : "Save notes")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color("Radish"))
+                HStack(spacing: 16) {
+                    Button {
+                        notesFocused = false
+                        onSaveNotes()
+                        // Show brief "Saved!" confirmation
+                        noteSaved = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { noteSaved = false }
+                    } label: {
+                        HStack(spacing: 4) {
+                            if noteSaved {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 12))
+                                Text("Saved!")
+                            } else {
+                                Text(isSaving ? "Saving…" : "Save notes")
+                            }
+                        }
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(noteSaved ? .green : Color("Radish"))
+                    }
+                    .disabled(isSaving)
                 }
-                .disabled(isSaving)
                 .padding(.horizontal, 20)
             }
 
-            // Photos
+            // ── Photos ────────────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Photos")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.secondary)
                     Spacer()
-                    PhotosPicker(selection: $photoItem, matching: .images) {
-                        Label("Add", systemImage: "camera")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color("Radish"))
-                    }
-                    .onChange(of: photoItem) { _, item in
-                        guard let item else { return }
-                        Task {
-                            if let data = try? await item.loadTransferable(type: Data.self) {
-                                onUploadPhoto(data)
+                    if isSignedIn {
+                        PhotosPicker(selection: $photoItem, matching: .images) {
+                            Label("Add photo", systemImage: "camera")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color("Radish"))
+                        }
+                        .onChange(of: photoItem) { _, item in
+                            guard let item else { return }
+                            Task {
+                                // Normalize to JPEG via UIImage so MIME type is always correct
+                                if let data = try? await item.loadTransferable(type: Data.self),
+                                   let uiImage = UIImage(data: data),
+                                   let jpeg = uiImage.jpegData(compressionQuality: 0.8) {
+                                    onUploadPhoto(jpeg)
+                                }
+                                // Reset so selecting the same photo again re-triggers onChange
+                                photoItem = nil
                             }
                         }
+                    } else {
+                        Text("Sign in to add photos")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color("SlateMid"))
                     }
                 }
                 .padding(.horizontal, 20)
 
                 if isUploading {
-                    ProgressView("Uploading…")
-                        .font(.system(size: 12))
-                        .padding(.horizontal, 20)
+                    HStack(spacing: 6) {
+                        ProgressView().scaleEffect(0.8)
+                        Text("Uploading photo…")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color("SlateMid"))
+                    }
+                    .padding(.horizontal, 20)
                 }
 
                 if !progress.photos.isEmpty {
@@ -377,7 +420,8 @@ struct StopDetailView: View {
                                 AsyncImage(url: URL(string: url)) { image in
                                     image.resizable().scaledToFill()
                                 } placeholder: {
-                                    Rectangle().fill(Color(.secondarySystemBackground))
+                                    Color(.secondarySystemBackground)
+                                        .overlay(ProgressView().scaleEffect(0.7))
                                 }
                                 .frame(width: 100, height: 100)
                                 .clipShape(RoundedRectangle(cornerRadius: 8))

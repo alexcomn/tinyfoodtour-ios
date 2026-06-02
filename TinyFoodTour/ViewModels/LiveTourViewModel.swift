@@ -179,17 +179,21 @@ final class LiveTourViewModel: ObservableObject {
     }
 
     func uploadPhoto(data: Data, userId: String?) async {
+        // Capture the stop index NOW — the user may swipe to another stop while uploading
+        let stopIdx = currentStopIndex
         isUploading = true
         defer { isUploading = false }
-        let ext = "jpg"
-        let path = "\(tourId)/\(currentStopIndex)/\(UUID().uuidString).\(ext)"
+        let path = "\(tourId)/\(stopIdx)/\(UUID().uuidString).jpg"
         do {
-            let url = try await supabase.uploadPhoto(bucket: "tour-photos", path: path, data: data)
-            guard currentStopIndex < progress.count else { return }
-            progress[currentStopIndex].photos.append(url)
+            // Data arriving here is already normalised to JPEG by the caller (UIImage.jpegData)
+            let url = try await supabase.uploadPhoto(
+                bucket: "tour-photos", path: path, data: data, mimeType: "image/jpeg"
+            )
+            guard stopIdx < progress.count else { return }
+            progress[stopIdx].photos.append(url)
             try? await supabase.insert(
                 table: "tour_stop_photos",
-                body: ["tour_id": tourId, "stop_index": currentStopIndex, "photo_url": url]
+                body: ["tour_id": tourId, "stop_index": stopIdx, "photo_url": url]
             )
         } catch {
             errorMessage = "Couldn't save that photo. Try again."
