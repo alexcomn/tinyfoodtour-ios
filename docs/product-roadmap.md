@@ -1,6 +1,7 @@
 # Tiny Food Tour — Product Roadmap
 
-> Current state, near-term priorities, and future bets. Updated June 2026.
+> Current state, near-term priorities, and future bets.
+> **Last updated: June 2026**
 
 ---
 
@@ -10,77 +11,97 @@
 Live at [tinyfoodtour.com](https://tinyfoodtour.com). Core flow fully operational.
 
 ### iOS App — Feature Complete, Pre-TestFlight 🔨
-Native SwiftUI app. All core screens built and functional on real device (iPhone 17 Pro / iOS 26.5).
+Native SwiftUI app. All core screens built and tested on real device (iPhone 17 Pro / iOS 26.5).
 
-| Feature | Status |
-|---|---|
-| Dynamic quiz (7 steps, branching from quiz_tree) | ✅ Built |
-| Neighborhood detection + manual search | ✅ Built |
-| Tour generation (calls generate-tour edge function) | ✅ Built |
-| Results screen (cards, map, photos, stop labels) | ✅ Built |
-| In-app menu viewer (fetch-menu edge function) | ✅ Built |
-| Stop shuffle + smart shuffle | ✅ Built |
-| Tweak your tour (stops + pricing sliders) | ✅ Built |
-| Live tour (check-off, notes, photos, map) | ✅ Built |
-| Completion card with Build Another / Review | ✅ Built |
-| Auth (sign in / sign up, token refresh) | ✅ Built |
-| Profile (display name, saved tours, favourites) | ✅ Built |
-| Share tour (native iOS share sheet) | ✅ Built |
-| Saved tours on home screen | ✅ Built |
-| Branding (launch screen, colors, typography) | ✅ Built |
-| App icon (custom illustration) | ✅ Built |
-| Client-side TSP route optimisation | ✅ Built |
-| Quiz & tour logic aligned to brief | ✅ Built |
-| Dietary mutual-exclusion ("Eat everything") | ✅ Built |
-| "Surprise me!" always pinned last | ✅ Built |
-| Relaxations / stretched-tour notice | ✅ Built |
-| Scroll (iOS 26 UIKit crossDissolve fix) | ✅ Built |
-| Container/layout sizing (iOS 26) | 🔄 In progress — UIKit fix shipped, awaiting device confirm |
-| Push notifications | ❌ Not built |
-| Offline support | ❌ Not built |
-| App Store submission | ❌ Not done |
+**One unresolved issue on real hardware:** The Results screen content is offset ~8-10pt left and scroll is unreliable on iOS 26.5. This is caused by iOS 26's new zoom presentation animation applying a residual coordinate transform. The latest fix (`FullScreenPresenter.swift`) presents via UIKit with `animated: false` from the window root — this is the most direct bypass available. Awaiting device confirmation.
 
----
-
-## One Remaining Blocker Before TestFlight
-
-**Bundle ID + signing** — requires your Apple Developer account in Xcode:
-1. Open `TinyFoodTour.xcodeproj`
-2. Select the `TinyFoodTour` target → **Signing & Capabilities**
-3. Set your **Team** (Apple Developer account)
-4. Change Bundle Identifier from `com.tinyfoodtour.app` if needed
-5. Xcode will auto-provision → build to real device → submit to TestFlight
-
----
-
-## iOS — Post-TestFlight (P2)
-
-| Priority | Feature | Notes |
+| Feature | Status | Notes |
 |---|---|---|
-| High | Layout/scroll confirm on device | Verify UIKit crossDissolve fix resolves iOS 26 coordinate issue |
-| High | App Store submission | Description, screenshots, privacy manifest required |
-| Medium | Dynamic Type support | System font size scaling not yet implemented |
-| Medium | Push notifications | APNs setup required |
-| Low | Offline map caching | Live tour needs to work underground |
-| Low | Android | Natural follow-on once iOS ships |
+| Dynamic quiz (7 steps, DB-driven branching) | ✅ | |
+| Neighborhood detection + manual search | ✅ | |
+| Curated city quick-picks | ✅ | |
+| Tour generation | ✅ | |
+| Results screen (cards, map, photos, hours) | ✅ | |
+| Stop shuffle (single stop replacement) | ✅ | Calls `shuffle-stop` edge function |
+| Smart shuffle (natural language) | ❌ Not built | Web has a chat-bubble popover; iOS has no UI for this yet |
+| Tweak your tour (stops + pricing sliders) | ✅ | |
+| In-app menu viewer | ✅ | Checks `menu_items` DB first, falls back to `fetch-menu` |
+| Live tour (check-off, notes, photos, map) | ✅ | |
+| Completed stop checkmarks on route map | ✅ | |
+| Completion card + Build Another flow | ✅ | |
+| Auth (sign in / sign up, token refresh) | ✅ | |
+| Profile (display name, saved tours, favourites) | ✅ | |
+| Share tour (native iOS share sheet) | ✅ | |
+| Saved tours on home screen | ✅ | Uses UserDefaults tokens, not Supabase `saved_tours` table |
+| App icon (custom illustration) | ✅ | |
+| Launch / splash screen | ✅ | |
+| Branding aligned to web | ✅ | |
+| Quiz & tour logic aligned to brief | ✅ | Dietary mutual-exclusion, "Surprise me!" sort, relaxations notice |
+| Client-side TSP route optimisation | ✅ | Compensates for server-side zigzag bugs |
+| Results scroll + container sizing (iOS 26) | 🔄 | UIKit `animated:false` fix shipped — needs device confirm |
+| Dynamic Type | ❌ | Font sizes don't scale with user's accessibility setting |
+| Push notifications | ❌ | APNs not configured |
+| Offline support | ❌ | |
+| App Store submission | ❌ | |
 
 ---
 
-## Tech Debt to Watch
+## Blocker Before TestFlight
 
-| Item | Risk |
+**Bundle ID + signing** — requires Apple Developer account in Xcode:
+1. Open `TinyFoodTour.xcodeproj`
+2. Target → **Signing & Capabilities** → set your Team
+3. Update Bundle Identifier (`com.tinyfoodtour.app`) if needed
+4. Xcode auto-provisions → build to device → submit to TestFlight
+
+---
+
+## Near-Term Priorities (pre-release)
+
+### P0 — Must confirm before TestFlight
+
+1. **Results scroll + layout on device** — the `FullScreenPresenter` UIKit fix needs device confirmation. If the iOS 26 coordinate offset is still present, the next step is to investigate whether Display Zoom is enabled on the test device (Settings → Display & Brightness → View → Standard) and whether the issue reproduces on other iOS 26 devices.
+
+2. **End-to-end test on real device** — quiz → generate → results (scroll, menu, shuffle) → live tour (check-off, notes, photos) → completion → home.
+
+### P1 — Valuable before wider release
+
+3. **Smart shuffle UI** — web has a chat-bubble popover per stop card where users type e.g. "something cheaper" or "has outdoor seating". The `smart-shuffle` edge function already exists; iOS just needs the input UI. Mirrors `Results.tsx` lines 853–900.
+
+4. **Dynamic Type** — system font-size scaling. All `Text` views use hard-coded sizes; wrap in `.font(.system(size: X))` using scaled values.
+
+5. **App Store submission** — description, screenshots (6.7" and 6.1" required), privacy manifest (`PrivacyInfo.xcprivacy`).
+
+---
+
+## Post-Release (P2)
+
+| Feature | Notes |
 |---|---|
-| iOS 26 scroll/layout — UIKit workaround | If Apple fixes the SwiftUI zoom animation in a patch, revert to native SwiftUI |
-| Xcode project generated by Python script | Works but fragile; Xcodegen would be cleaner long-term |
-| `SupabaseService.swift` is hand-rolled | Fine now; consider official SDK if auth complexity grows |
-| `generate-tour` edge function ~1380 lines | Gets harder to maintain; worth splitting when next touching it |
-| Directions API is deprecated | Works today; migrate to Routes API if Google enforces sunset |
-| TSP reorder runs client-side AND server-side | Client-side compensates for server bugs; remove if server fixes TSP |
+| Push notifications | APNs + Supabase pg_cron or Edge Function triggers needed |
+| Offline map caching | For live tour underground; would need pre-downloaded tiles |
+| Android app | Natural follow-on once iOS is stable |
+| Saved tours to Supabase | iOS currently uses UserDefaults; sync to `saved_tours` table for cross-device access |
+
+---
+
+## Tech Debt
+
+| Item | Risk / Action |
+|---|---|
+| **iOS 26 UIKit presentation workaround** | `FullScreenPresenter.swift` — if Apple patches the SwiftUI zoom animation in iOS 26.x, replace `.uiFullScreen` with native SwiftUI `.fullScreenCover` + NavigationStack |
+| **Xcode project generated by Python** | `generate_xcodeproj.py` must be run after adding any Swift file. Consider migrating to Xcodegen for robustness |
+| **`SupabaseService.swift` is hand-rolled** | Zero dependencies is a feature, but if auth requirements grow, the official Supabase Swift SDK is worth evaluating |
+| **`generate-tour` edge function ~1380 lines** | Monolithic; worth splitting into location-resolution, discovery, AI-curation, and enrichment modules when next touching it |
+| **Directions API deprecated** | Works today; migrate to Routes API (`routes/directions/v2:computeRoutes`) if Google enforces the sunset |
+| **TSP reorder runs client-side AND server-side** | `Tour.reorderLinear()` in iOS compensates for server-side zigzag bugs. Remove the client-side pass if `reorderStopsLinear` in the edge function is fixed |
+| **Saved tours split storage** | Web uses Supabase `saved_tours` table; iOS uses UserDefaults tokens. Saved tours don't sync cross-platform |
 
 ---
 
 ## Known Gaps (Documented, Not Blocking)
 
-- **Zigzag routes** — `reorderStopsLinear` in `generate-tour` occasionally returns suboptimal routes. iOS app applies client-side TSP as a fallback but the root fix is in the edge function.
-- **Adjacent walk times after shuffle** — only the swapped stop's inbound time updates; neighbors may drift 1–3 min. Acceptable for now per brief §10.
-- **Anonymous user history** — no server-side visit history for anonymous users; relies entirely on client-provided `exclude_place_ids`.
+- **Zigzag routes** — `reorderStopsLinear` in `generate-tour` occasionally returns suboptimal walking paths. The iOS app applies `Tour.reorderLinear()` client-side as a fallback, but the root fix belongs in the edge function.
+- **Adjacent walk times after shuffle** — only the swapped stop's inbound walk time is recomputed. Neighbouring stops may drift 1–3 min. Tracked in brief §10 as acceptable.
+- **Anonymous user visit history** — no server-side record for anon users; their `exclude_place_ids` (for "Try somewhere new!") comes entirely from the client. Consider a `localStorage`-persisted exclusion list for multi-session anon users.
+- **Smart shuffle** — not built in iOS. Users can only do random single-stop shuffles. Web users can type natural language requests ("something vegan", "has a patio").
