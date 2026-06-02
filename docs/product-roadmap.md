@@ -1,6 +1,6 @@
 # Tiny Food Tour — Product Roadmap
 
-> Current state, near-term priorities, and future bets. Updated as of May 2026.
+> Current state, near-term priorities, and future bets. Updated June 2026.
 
 ---
 
@@ -9,99 +9,60 @@
 ### Web App — Production ✅
 Live at [tinyfoodtour.com](https://tinyfoodtour.com). Core flow fully operational.
 
-| Feature | Status |
-|---|---|
-| Dynamic quiz (7 steps, branching) | ✅ Live |
-| Tour generation (AI + Google Places) | ✅ Live |
-| Results screen with stop cards + map | ✅ Live |
-| Live tour walk-along mode | ✅ Live |
-| Stop shuffle + smart shuffle | ✅ Live |
-| Auth (email/password) | ✅ Live |
-| User profile + tour history | ✅ Live |
-| Cities directory | ✅ Live |
-| Blog / editorial content | ✅ Live |
-| Email capture / newsletter | ✅ Live |
-| Share cards (PNG generation) | ✅ Live |
-
-### iOS App — In Development 🔨
-Native SwiftUI app. Core flow functional, polish and completeness work ongoing.
+### iOS App — Feature Complete, Pre-TestFlight 🔨
+Native SwiftUI app. All core screens built and functional on real device (iPhone 17 Pro / iOS 26.5).
 
 | Feature | Status |
 |---|---|
-| Quiz (dynamic, loads from quiz_tree) | ✅ Built |
+| Dynamic quiz (7 steps, branching from quiz_tree) | ✅ Built |
 | Neighborhood detection + manual search | ✅ Built |
-| Tour generation | ✅ Built |
-| Results screen (cards, map, photos) | ✅ Built |
-| Live tour (check-off, notes, photos) | ✅ Built |
-| Auth (sign in / sign up) | ✅ Built |
+| Tour generation (calls generate-tour edge function) | ✅ Built |
+| Results screen (cards, map, photos, stop labels) | ✅ Built |
+| In-app menu viewer (fetch-menu edge function) | ✅ Built |
+| Stop shuffle + smart shuffle | ✅ Built |
+| Tweak your tour (stops + pricing sliders) | ✅ Built |
+| Live tour (check-off, notes, photos, map) | ✅ Built |
+| Completion card with Build Another / Review | ✅ Built |
+| Auth (sign in / sign up, token refresh) | ✅ Built |
+| Profile (display name, saved tours, favourites) | ✅ Built |
+| Share tour (native iOS share sheet) | ✅ Built |
 | Saved tours on home screen | ✅ Built |
 | Branding (launch screen, colors, typography) | ✅ Built |
-| App icon | ✅ Built |
-| Profile screen | ❌ Not built |
-| Stop shuffle / smart shuffle | ❌ Not built |
-| Share tour card | ❌ Not built |
+| App icon (custom illustration) | ✅ Built |
+| Client-side TSP route optimisation | ✅ Built |
+| Quiz & tour logic aligned to brief | ✅ Built |
+| Dietary mutual-exclusion ("Eat everything") | ✅ Built |
+| "Surprise me!" always pinned last | ✅ Built |
+| Relaxations / stretched-tour notice | ✅ Built |
+| Scroll (iOS 26 UIKit crossDissolve fix) | ✅ Built |
+| Container/layout sizing (iOS 26) | 🔄 In progress — UIKit fix shipped, awaiting device confirm |
 | Push notifications | ❌ Not built |
 | Offline support | ❌ Not built |
 | App Store submission | ❌ Not done |
 
 ---
 
-## iOS — Near-Term Priorities
+## One Remaining Blocker Before TestFlight
 
-### P0 — Functional completeness (required before TestFlight)
-
-1. **Profile screen** — Show completed tours, favorited spots, sign-out button. The nav bar person icon is a dead tap right now.
-2. **End-to-end live tour testing** — Verify check-off, notes, photo upload, and completion card work on a real generated tour.
-3. **Auth session persistence** — Confirm the stored access token survives app relaunch correctly.
-4. **Empty + error states** — No network, failed generation, zero stops returned all need graceful handling beyond the current snag screen.
-5. **Bundle ID + signing** — `com.tinyfoodtour.app` needs a real Apple Developer account configured in Xcode before any device/TestFlight builds.
-
-### P1 — Nice-to-have before TestFlight
-
-6. **Stop shuffle** — Let users swap a stop they don't like. The `shuffle-stop` edge function already exists; need iOS UI (a refresh icon per card in Results).
-7. **Saved tours loading** — The home screen past tours list needs a real test with at least one saved tour.
-8. **Accessibility** — VoiceOver labels on pill buttons, map annotations, and stop cards.
-
-### P2 — Post-TestFlight
-
-9. **Share tour** — Generate a shareable link (tour.share_token already exists) or a native iOS share sheet.
-10. **Push notifications** — "Your Saturday route is ready →" — requires APNs setup.
-11. **App icon refinement** — Current icon is a photo-crop of splash-logo; a cleaner flat wordmark-on-red version would look better at small sizes.
-12. **Dynamic Type support** — Scale fonts with user's system size preference.
+**Bundle ID + signing** — requires your Apple Developer account in Xcode:
+1. Open `TinyFoodTour.xcodeproj`
+2. Select the `TinyFoodTour` target → **Signing & Capabilities**
+3. Set your **Team** (Apple Developer account)
+4. Change Bundle Identifier from `com.tinyfoodtour.app` if needed
+5. Xcode will auto-provision → build to real device → submit to TestFlight
 
 ---
 
-## Web — Near-Term Priorities
+## iOS — Post-TestFlight (P2)
 
-1. **Performance** — Tour generation latency averages 8–15s; investigate parallelizing Directions API calls.
-2. **Curated cities expansion** — More cities seeded in the `locations` table = better tour quality in popular spots.
-3. **Mobile web improvements** — iOS Safari edge cases in the quiz/live tour flow.
-
----
-
-## Future Bets (Unscheduled)
-
-| Idea | Why interesting |
-|---|---|
-| **Android app** | Natural follow-on once iOS is shipped |
-| **Saved itineraries / trip planning** | Multi-day trip = multiple tours strung together |
-| **Social / sharing** | "My friend built this tour" — viral loop |
-| **Local partner integrations** | Featured spots with reservation links, special menus |
-| **Offline map caching** | Live tour needs to work underground |
-| **Watch app** | Glanceable step-by-step navigation on wrist |
-| **Tour re-run** | "Take me back to my Capitol Hill tour" |
-| **Group mode** | Multiple people, one shared tour |
-
----
-
-## Out of Scope (explicit non-goals)
-
-- Driving or transit directions — TFT is a **walking product**
-- User-generated content / reviews — we curate, we don't crowdsource
-- Restaurant booking / reservations — keep it simple
-- Android before iOS ships
-- Switching map provider (Google Maps is the contract)
-- Replacing the AI curation model (Gemini 3 Flash is cost/latency tuned)
+| Priority | Feature | Notes |
+|---|---|---|
+| High | Layout/scroll confirm on device | Verify UIKit crossDissolve fix resolves iOS 26 coordinate issue |
+| High | App Store submission | Description, screenshots, privacy manifest required |
+| Medium | Dynamic Type support | System font size scaling not yet implemented |
+| Medium | Push notifications | APNs setup required |
+| Low | Offline map caching | Live tour needs to work underground |
+| Low | Android | Natural follow-on once iOS ships |
 
 ---
 
@@ -109,8 +70,17 @@ Native SwiftUI app. Core flow functional, polish and completeness work ongoing.
 
 | Item | Risk |
 |---|---|
-| `generate-tour` edge function is ~1300 lines | Gets harder to maintain; worth splitting when touching it |
-| Directions API is deprecated | Works today; migrate to Routes API if Google enforces sunset |
-| `SupabaseService.swift` is hand-rolled | Fine for current scope; consider official SDK if auth complexity grows |
+| iOS 26 scroll/layout — UIKit workaround | If Apple fixes the SwiftUI zoom animation in a patch, revert to native SwiftUI |
 | Xcode project generated by Python script | Works but fragile; Xcodegen would be cleaner long-term |
-| Supabase `types.ts` is auto-generated | Never edit manually; regenerate via Supabase CLI after schema changes |
+| `SupabaseService.swift` is hand-rolled | Fine now; consider official SDK if auth complexity grows |
+| `generate-tour` edge function ~1380 lines | Gets harder to maintain; worth splitting when next touching it |
+| Directions API is deprecated | Works today; migrate to Routes API if Google enforces sunset |
+| TSP reorder runs client-side AND server-side | Client-side compensates for server bugs; remove if server fixes TSP |
+
+---
+
+## Known Gaps (Documented, Not Blocking)
+
+- **Zigzag routes** — `reorderStopsLinear` in `generate-tour` occasionally returns suboptimal routes. iOS app applies client-side TSP as a fallback but the root fix is in the edge function.
+- **Adjacent walk times after shuffle** — only the swapped stop's inbound time updates; neighbors may drift 1–3 min. Acceptable for now per brief §10.
+- **Anonymous user history** — no server-side visit history for anonymous users; relies entirely on client-provided `exclude_place_ids`.
