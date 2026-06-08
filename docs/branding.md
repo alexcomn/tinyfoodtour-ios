@@ -42,7 +42,7 @@ Used for map markers, circle badges, and stop labels. Always use in this exact o
 ### Web (Tailwind classes)
 - **Headings:** `font-heading` → **Josefin Sans** (geometric sans), weights 300–700. Applied site-wide via the Weekly Theme system; Playfair Display is only the Tailwind fallback when no theme is active.
 - **Body:** `font-body` → DM Sans (sans), weights 300–700
-- **Wordmark:** **Fraunces** (display serif), uppercase, letter-spacing 0.25em, weight 500
+- **Wordmark:** **Josefin Sans** weight 500, uppercase, letter-spacing ~0.14em (verified via tinyfoodtour.com computed styles — earlier "Fraunces" guidance was out of date)
 
 ### iOS (SwiftUI) — actual brand fonts are bundled
 Source of truth is **tinyfoodtour.com** (verified via computed styles). Both
@@ -72,17 +72,18 @@ Bundled font files (verified to resolve by PostScript name at runtime):
 
 ## Wordmark
 
-**"TINY FOOD TOUR"** — always all-caps, wide letter-spacing, Fraunces / system serif approximation, medium weight, `Foreground` color.
+**"TINY FOOD TOUR"** — always all-caps, wide letter-spacing, **Josefin Sans Medium (500)**, `Foreground` color. (Verified against tinyfoodtour.com computed styles — the wordmark is Josefin Sans, **not** Fraunces. The older "Fraunces / system serif" guidance was wrong.)
 
 - The brand quirk is a lowercase `i` in the logo PNG ("TiNY") but text rendering shows all-caps.
-- The BrandMark renders in a serif display face (Fraunces / system serif) — **not** the plain sans that body copy uses.
+- The wordmark uses the bundled `JosefinSans-Medium` font via the `TFTFont.wordmark()` helper — never `.system()`.
 - Used at 11pt in navs/headers; scale up for hero contexts (13–15pt max).
+- Tracking is `fontSize * 0.14` (≈0.14em — matches the site's 1.96px @ 14px), **not** 0.25em.
 
 ```swift
 // BrandMarkView.swift
 Text("TINY FOOD TOUR")
-    .font(.system(size: 11, weight: .medium))
-    .tracking(fontSize * 0.25)
+    .font(TFTFont.wordmark(fontSize))   // JosefinSans-Medium (bundled)
+    .tracking(fontSize * 0.14)
     .foregroundColor(Color("Foreground"))
 ```
 

@@ -1,7 +1,7 @@
 # Tiny Food Tour — Project Overview
 
 > Read this first. Covers what TFT is, the full tech stack, repo structure, and everything a new developer or contractor needs to get productive.
-> **Last updated: June 2026**
+> **Last updated: June 7, 2026**
 
 ---
 
@@ -132,7 +132,7 @@ TinyFoodTour/
     QuizViewModel.swift     — quiz tree loading, step sequencing, answer state
     TourViewModel.swift     — tour generation, tweak-with-filters, SavedToursViewModel
     LiveTourViewModel.swift — stop check-off, notes, photo upload, progress persistence
-    ProfileViewModel.swift  — display name, saved tours (from UserDefaults), favourites
+    ProfileViewModel.swift  — display name, saved tours (Supabase + UserDefaults sync), favourites
   Views/
     Home/         HomeView.swift
     Quiz/         QuizView.swift, NeighborhoodStepView.swift
@@ -149,7 +149,7 @@ TinyFoodTour/
       StatusBarModifier.swift   — .lightStatusBar() / .darkStatusBar() helpers
       SafeArea.swift            — UIApplication.safeAreaBottom helper
       Notifications.swift       — Notification.Name extensions
-      FullScreenPresenter.swift — ⚠️ iOS 26 WORKAROUND — see below
+      FullScreenPresenter.swift — ⚠️ LEGACY / UNUSED — superseded by inline swaps (see below)
   Assets.xcassets/
     AppIcon.appiconset/   — all 14 required sizes (iphone + ipad + ios-marketing)
     LaunchImage.imageset/ — 3 scale variants (375pt display canvas)
@@ -157,30 +157,30 @@ TinyFoodTour/
     *.colorset/           — named brand colors (Primary, Radish, Yolk, PizzaCrust, Cream, Tomato, …)
 ```
 
-### ⚠️ iOS 26 Platform Issue — FullScreenPresenter
+### Navigation: inline view swaps for the deep flow
 
-**This is the most important thing a new iOS developer needs to know.**
+**This is the most important thing a new iOS developer needs to know about navigation.**
 
-iOS 26 introduced a new zoom presentation animation for all modal presentations (NavigationStack push, fullScreenCover). This animation applies a scale + position transform that doesn't fully reset, leaving every presented view's coordinate space offset ~8-10pt to the left. Content is clipped, scroll may not work.
+The deepest screen transitions are done with **inline `if/else` view swaps**, not `.navigationDestination` or `.fullScreenCover`:
+- `GeneratingView` → `ResultsView` — `GeneratingView` swaps its own body to `ResultsView` once `vm.tour` is set (`if showResults`).
+- `ResultsView` → `LiveTourView` — `ResultsView` swaps to `LiveTourView` (`if showLiveTour`); the `.buildAnotherTour` notification cascade unwinds everything back to `HomeView`.
 
-**Our workaround: `FullScreenPresenter.swift`**
+Unwinding "back" is therefore a matter of flipping the bool (`showResults`/`showLiveTour`) — there is no navigation stack to pop. The "Review your stops" path passes completed stop indices back via the `onReviewStops` closure when `LiveTourView` swaps back to `ResultsView`.
 
-All major screen transitions use `view.uiFullScreen(isPresented:content:)` instead of SwiftUI's `.fullScreenCover` or `.navigationDestination`. This presents via UIKit with:
-- **`modalPresentationStyle = .fullScreen`** — guaranteed full-screen bounds
-- **`animated: false`** — no transition = no transform = no residue
-- Presents from the **topmost UIViewController in the key window** — bypasses NavigationStack context entirely
+**Why inline swaps instead of NavigationStack:** iOS 26 introduced a zoom presentation animation that left presented views with a residual coordinate transform (content offset ~8-10pt left, scroll unreliable). Inline swaps avoid the presentation machinery entirely, so there is no transform to leak. `QuizView` and `GeneratingView` are still reached via `navigationDestination` from `HomeView` (1–2 levels deep is fine); auth/profile/tweaks use `.sheet`.
 
-If Apple fixes this in a later iOS 26 patch, replace `.uiFullScreen` with standard SwiftUI navigation.
+> **Note on `FullScreenPresenter.swift`:** this was an earlier UIKit-based workaround (`view.uiFullScreen(...)`, `animated: false`) for the same iOS 26 issue. It is **no longer used** — the inline-swap approach replaced it. The file remains in the repo but is dead code; safe to delete once you're confident nothing else references it.
 
-**Screens affected:**
-- `GeneratingView` → `ResultsView` (via `.uiFullScreen`)
-- `ResultsView` → `LiveTourView` (via `.uiFullScreen`)
+### The Results scroll / layout saga (resolved)
 
-**Screens NOT affected (they are roots or presented correctly):**
-- `HomeView` — NavigationStack root, never pushed
-- `QuizView` — pushed via `navigationDestination` from HomeView (works fine at 1 level deep)
-- `GeneratingView` — pushed via `navigationDestination` from QuizView (2 levels — acceptable)
-- Auth, Profile, Tweaks sheets — presented as `.sheet`, which uses a different animation path
+For a long stretch the Results screen appeared to not scroll and its content extended past the physical viewport. After many dead ends (blamed on presentation transforms), the **actual root cause** was found: the photo strip was a fixed `HStack` of 4×100pt tiles = 456pt wide inside a 402pt viewport. That horizontal overflow broke vertical scrolling *and* shifted content left.
+
+**Fix (do not regress):**
+- The photo strip is a `ScrollView(.horizontal)` — **never** a fixed-width `HStack` that can exceed screen width.
+- The outer Results `ScrollView` is bounded by a `GeometryReader` (`.frame(width: geo.size.width, height: geo.size.height)`), with the nav row as a top `.overlay` and a `Color.clear.frame(height: 56)` spacer so content clears it.
+- `TinyFoodTourApp.init()` sets `UIScrollView.appearance().alwaysBounceVertical = true` as a belt-and-suspenders guard.
+
+Verified empirically in the simulator (content height > container height; programmatic `scrollTo(.bottom)` works) and confirmed visually ("content edges are presenting perfectly").
 
 ### Supabase from iOS
 
@@ -193,7 +193,13 @@ If Apple fixes this in a later iOS 26 patch, replace `.uiFullScreen` with standa
 
 **Auth persistence:** Access token + refresh token stored in UserDefaults. On every app launch, `AuthViewModel.init()` restores the session and kicks off a background token refresh (Supabase tokens expire after ~1 hour). If refresh fails, the user is signed out silently.
 
-**Saved tours:** iOS stores `share_token` strings in `UserDefaults` (key: `tft_saved_tour_tokens`), **not** in the Supabase `saved_tours` table (which the web app uses). When fetching saved tours, the iOS app queries `tours` by `share_token`. Tour custom names are stored in `UserDefaults` as `tft_tour_names: [token: name]`.
+**Saved tours (cross-device sync):** Saving a tour while signed in writes to **both** stores:
+- **Supabase `saved_tours`** (`user_id`, `tour_id`, `name`, `created_at`) — the primary store, shared with the web app, enables cross-device access. `name` holds the AI-generated tour title (`tour.displayTitle`).
+- **`UserDefaults`** — `tft_saved_tour_tokens` (array of `share_token`) keeps the home-screen list working offline and supports anonymous (signed-out) saves.
+
+On profile load (`ProfileViewModel.load`), Supabase `saved_tours` is the source of truth for signed-in users; any UserDefaults-only tokens (anonymous or pre-sync saves) are **migrated up** to Supabase automatically, with the AI title pulled from the tour's `_meta`. Removing a tour deletes from both stores. Custom renames stay local in `UserDefaults` (`tft_tour_names: [token: name]`) and take display priority over the AI title.
+
+Saved tour cards in the profile show the AI title, stop count, and the **date saved** (from `saved_tours.created_at`). See `SavedToursViewModel.saveTour(tour:userId:)` and `ProfileViewModel`.
 
 ### Adding new Swift files
 
