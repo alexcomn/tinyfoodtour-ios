@@ -49,21 +49,46 @@ struct RouteSnapshotView: View {
         options.scale = scale
         options.mapType = .standard
 
-        // Fit region to all stops with padding — mirrors web fitBounds
+        // Fit region to all stops, sized to the frame's aspect ratio so the
+        // route fills the preview. The old approach padded each axis by 1.7×
+        // independently; MapKit then expanded whichever delta didn't match the
+        // frame aspect, compounding the zoom-out and leaving the route tiny.
         let lats = located.map { $0.lat! }
         let lngs = located.map { $0.lng! }
-        let spread = (
-            lat: lats.max()! - lats.min()!,
-            lng: lngs.max()! - lngs.min()!
-        )
-        // Single stop: show ~400m radius. Multi-stop: fit with 70% padding.
-        let latSpan = spread.lat < 0.001 ? 0.008 : spread.lat * 1.7
-        let lngSpan = spread.lng < 0.001 ? 0.008 : spread.lng * 1.7
+        let centerLat = (lats.min()! + lats.max()!) / 2
+        let centerLng = (lngs.min()! + lngs.max()!) / 2
+
+        // Raw geographic extent, floored so a single/clustered tour gets a
+        // sensible neighbourhood-level view instead of zooming to max.
+        let rawLat = max(lats.max()! - lats.min()!, 0.0030)   // ~330m
+        let rawLng = max(lngs.max()! - lngs.min()!, 0.0030)
+
+        // 1.3× → route occupies ~77% of the frame, with a ~15% margin each side
+        // (comfortably clears the ~14pt marker radius even on the short axis).
+        let padding = 1.3
+        let padLat = rawLat * padding
+        let padLng = rawLng * padding
+
+        // Longitude degrees are compressed by cos(latitude); fold that in so the
+        // on-screen aspect comparison is in real screen-space terms.
+        let cosLat = max(cos(centerLat * .pi / 180), 0.01)
+        let frameAspect = width / height                      // ~1.86 (w/h)
+        let boxAspect = (padLng * cosLat) / padLat            // route box, screen-space
+
+        let latSpan: CLLocationDegrees
+        let lngSpan: CLLocationDegrees
+        if boxAspect > frameAspect {
+            // Route is wider than the frame → width-bound; expand latitude.
+            lngSpan = padLng
+            latSpan = (padLng * cosLat) / frameAspect
+        } else {
+            // Route is taller/narrower than the frame → height-bound; expand longitude.
+            latSpan = padLat
+            lngSpan = (padLat * frameAspect) / cosLat
+        }
+
         options.region = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(
-                latitude:  (lats.min()! + lats.max()!) / 2,
-                longitude: (lngs.min()! + lngs.max()!) / 2
-            ),
+            center: CLLocationCoordinate2D(latitude: centerLat, longitude: centerLng),
             span: MKCoordinateSpan(latitudeDelta: latSpan, longitudeDelta: lngSpan)
         )
 
