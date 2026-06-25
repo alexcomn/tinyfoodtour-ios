@@ -5,11 +5,12 @@ struct TinyFoodTourApp: App {
     @StateObject private var authVM = AuthViewModel()
     @State private var showSplash = true
     @State private var deepLinkedTour: Tour?
-    @State private var isLoadingDeepLink = false
+
+    // Universal Link destinations (set by handleUniversalLink)
+    @State private var universalLinkHandle: String?    // /u/:handle
+    @State private var universalLinkWalkCode: String?  // /walk/:code
 
     init() {
-        // Force all UIScrollViews to always bounce vertically so SwiftUI
-        // ScrollViews scroll even if iOS 26 miscalculates content height.
         UIScrollView.appearance().alwaysBounceVertical = true
     }
 
@@ -25,25 +26,30 @@ struct TinyFoodTourApp: App {
                         .zIndex(1)
                 }
             }
+            .toastOverlay()
             .task {
-                // Hold splash briefly, then fade out
+                // Bind Session singleton to auth state once at startup
+                Session.shared.bind(to: authVM)
+
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 withAnimation(.easeOut(duration: 0.6)) {
                     showSplash = false
                 }
             }
-            // tinyfoodtour://tour/{share_token}
+            // ── URL routing ──────────────────────────────────────────────────
+            // Custom scheme:  tinyfoodtour://tour/{token}
+            // Universal Link: https://tinyfoodtour.com/t/{slug}
+            //                 https://tinyfoodtour.com/tour/{token}
+            //                 https://tinyfoodtour.com/u/{handle}
+            //                 https://tinyfoodtour.com/walk/{code}
             .onOpenURL { url in
-                guard url.scheme == "tinyfoodtour",
-                      url.host == "tour",
-                      let token = url.pathComponents.dropFirst().first
-                else { return }
-                Task {
-                    isLoadingDeepLink = true
-                    deepLinkedTour = try? await SupabaseService.shared.fetchTour(byShareToken: token)
-                    isLoadingDeepLink = false
+                if url.scheme == "tinyfoodtour" {
+                    handleCustomScheme(url)
+                } else {
+                    Task { await handleUniversalLink(url) }
                 }
             }
+            // Deep-linked tour (custom scheme + /tour/* universal)
             .sheet(item: $deepLinkedTour) { tour in
                 NavigationStack {
                     ResultsView(tour: tour, isShared: true, generationParams: nil)
@@ -52,11 +58,75 @@ struct TinyFoodTourApp: App {
                         .toolbar {
                             ToolbarItem(placement: .navigationBarLeading) {
                                 Button("Close") { deepLinkedTour = nil }
-                                    .foregroundColor(Color("SlateMid"))
+                                    .foregroundColor(Color.tftSlateMid)
                             }
                         }
                 }
             }
+            // TODO M3: .sheet(item: $universalLinkHandle) { PublicProfileView(handle: $0) }
+            // TODO M5: .sheet(item: $universalLinkWalkCode) { WalkTogetherView(code: $0)  }
         }
     }
+
+    // MARK: - Custom scheme handler (tinyfoodtour://)
+
+    private func handleCustomScheme(_ url: URL) {
+        guard url.scheme == "tinyfoodtour",
+              url.host == "tour",
+              let token = url.pathComponents.dropFirst().first
+        else { return }
+        Task {
+            deepLinkedTour = try? await SupabaseService.shared.fetchTour(byShareToken: token)
+        }
+    }
+
+    // MARK: - Universal Link handler (https://tinyfoodtour.com/*)
+
+    @MainActor
+    private func handleUniversalLink(_ url: URL) async {
+        guard url.host == TFTConfig.webHost else { return }
+        let parts = url.pathComponents.filter { $0 != "/" }
+        guard let prefix = parts.first else { return }
+
+        switch prefix {
+        case "t":
+            // Short link: /t/{slug} — resolve slug → share_token, then load tour
+            if let slug = parts[safe: 1] {
+                await loadTourBySlug(slug)
+            }
+
+        case "tour":
+            // Long link: /tour/{share_token}
+            if let token = parts[safe: 1] {
+                deepLinkedTour = try? await SupabaseService.shared.fetchTour(byShareToken: token)
+            }
+
+        case "u":
+            // Public profile: /u/{handle} — wired up in M3
+            if let handle = parts[safe: 1] {
+                universalLinkHandle = handle
+            }
+
+        case "walk":
+            // Walk Together: /walk/{code} — wired up in M5
+            if let code = parts[safe: 1] {
+                universalLinkWalkCode = code
+            }
+
+        default:
+            break
+        }
+    }
+
+    private func loadTourBySlug(_ slug: String) async {
+        struct SlugRow: Decodable { let share_token: String }
+        guard let rows: [SlugRow] = try? await SupabaseService.shared.query(
+            table: "tour_short_links",
+            select: "share_token",
+            filters: ["slug": "eq.\(slug)"]
+        ), let token = rows.first?.share_token
+        else { return }
+        deepLinkedTour = try? await SupabaseService.shared.fetchTour(byShareToken: token)
+    }
 }
+

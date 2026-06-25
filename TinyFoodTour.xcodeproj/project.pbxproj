@@ -41,7 +41,14 @@
 		E04ADF524C71495499D79541 /* TFTFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0712C5F20494E10A90DC5AD /* TFTFont.swift */; };
 		E46910B724F64FACA4016D08 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F51CD5EBA7473EB89A3717 /* SplashView.swift */; };
 		E68A7A91E87A4B38ABD69BE0 /* LiveTourViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C5FF95DB899484BBFACEF46 /* LiveTourViewModel.swift */; };
-/* End PBXBuildFile section */
+		FC8C9B400B2640A3AE407E15 /* TFTColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F356B7E5BADE47EA9E0223EE /* TFTColor.swift */; };
+		E9ECA23952C449E7851BBFD4 /* TFTTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C690AEC305F41B6A227D193 /* TFTTypography.swift */; };
+		43A3F9DB4AE84152A5347E65 /* ToastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECB9F4ADFC34508A9F0E35D /* ToastView.swift */; };
+		2314618BCEA6458E8B561406 /* TFTConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D06A8CEDBBE4F20B9C04A0D /* TFTConfig.swift */; };
+		EFD74E4DA99146E1B7164595 /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7D024D740E64887AA88E81D /* DeviceIdentity.swift */; };
+		E56888102ED04BCE89A87338 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B50E8280CD43E4A7DBF572 /* Session.swift */; };
+		996BBDC49E8142F3B5B114F0 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F08779155AC4095B52342F9 /* Toast.swift */; };
+		/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		04F666A1D77940838556C94B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -81,7 +88,14 @@
 		F3D2871CB2D34483A0DF1B52 /* TinyFoodTour.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TinyFoodTour.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F7B9C075376D4B3E83D6F472 /* SafeArea.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeArea.swift; sourceTree = "<group>"; };
 		FCD34205C31C4C5E87A45F0B /* JosefinSans-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JosefinSans-Regular.ttf"; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+		F356B7E5BADE47EA9E0223EE /* TFTColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFTColor.swift; sourceTree = "<group>"; };
+		2C690AEC305F41B6A227D193 /* TFTTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFTTypography.swift; sourceTree = "<group>"; };
+		CECB9F4ADFC34508A9F0E35D /* ToastView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastView.swift; sourceTree = "<group>"; };
+		4D06A8CEDBBE4F20B9C04A0D /* TFTConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TFTConfig.swift; sourceTree = "<group>"; };
+		C7D024D740E64887AA88E81D /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
+		C4B50E8280CD43E4A7DBF572 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		4F08779155AC4095B52342F9 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
+		/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		C9543F8A14EA4DCE839FF83D /* Frameworks */ = {
@@ -135,6 +149,7 @@
 				56961DF87C8B438295C9BCCE /* Models */,
 				052234029AF1408A86C0ECDF /* Services */,
 				A0B0991B4AE04D6EBA9F4B7E /* ViewModels */,
+				CD0C9D7F8670408A9CE22B5E /* Foundation */,
 				EF0DBB9245764FED9E0DDC3A /* Views */,
 				A338F9905CE44DFE81E8ACDE /* Assets.xcassets */,
 				04F666A1D77940838556C94B /* Info.plist */,
@@ -227,6 +242,9 @@
 				94F5ECC878034CBE9D10379A /* MenuViewerSheet.swift */,
 				520EBE8D0FB241AD9B0CFA14 /* Notifications.swift */,
 				C0712C5F20494E10A90DC5AD /* TFTFont.swift */,
+				F356B7E5BADE47EA9E0223EE /* TFTColor.swift */,
+				2C690AEC305F41B6A227D193 /* TFTTypography.swift */,
+				CECB9F4ADFC34508A9F0E35D /* ToastView.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -265,7 +283,19 @@
 			path = Fonts;
 			sourceTree = "<group>";
 		};
-/* End PBXGroup section */
+
+		CD0C9D7F8670408A9CE22B5E /* Foundation */ = {
+			isa = PBXGroup;
+			children = (
+				4D06A8CEDBBE4F20B9C04A0D /* TFTConfig.swift */,
+				C7D024D740E64887AA88E81D /* DeviceIdentity.swift */,
+				C4B50E8280CD43E4A7DBF572 /* Session.swift */,
+				4F08779155AC4095B52342F9 /* Toast.swift */,
+			);
+			path = Foundation;
+			sourceTree = "<group>";
+		};
+		/* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
 		2D2E88B821B44BFAA5D0999C /* TinyFoodTour */ = {
@@ -367,7 +397,14 @@
 				77705BE44B404F7180F3067A /* AuthView.swift in Sources */,
 				C453AD6E7995418BB391EFF5 /* ProfileView.swift in Sources */,
 				D653E168E389493FBBD17186 /* ProfileViewModel.swift in Sources */,
-			);
+							FC8C9B400B2640A3AE407E15 /* TFTColor.swift in Sources */,
+				E9ECA23952C449E7851BBFD4 /* TFTTypography.swift in Sources */,
+				43A3F9DB4AE84152A5347E65 /* ToastView.swift in Sources */,
+				2314618BCEA6458E8B561406 /* TFTConfig.swift in Sources */,
+				EFD74E4DA99146E1B7164595 /* DeviceIdentity.swift in Sources */,
+				E56888102ED04BCE89A87338 /* Session.swift in Sources */,
+				996BBDC49E8142F3B5B114F0 /* Toast.swift in Sources */,
+);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

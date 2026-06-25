@@ -1,10 +1,8 @@
 import Foundation
 
-// MARK: - Configuration
-// Set these in TinyFoodTour/Config.xcconfig (not committed) or via Info.plist
-// For initial development they are hardcoded here and should be moved to env config before shipping
-private let supabaseURL = "https://xefehzsclkefebzyqdrh.supabase.co"
-private let supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZmVoenNjbGtlZmVienlxZHJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MzU5NTMsImV4cCI6MjA5MDUxMTk1M30.lPR244Zm5Dgrx5zy_tO8v3sQWyQRZF0ZFRjmfnGGl6c"
+// MARK: - Configuration (sourced from TFTConfig — see Foundation/TFTConfig.swift)
+private let supabaseURL     = TFTConfig.supabaseURL
+private let supabaseAnonKey = TFTConfig.supabaseAnonKey
 
 // MARK: - Supabase REST client (no SDK dependency)
 final class SupabaseService {

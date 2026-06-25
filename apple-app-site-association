@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["9Y98BV3CPZ.com.tinyfoodtour.app"],
+        "components": [
+          { "/": "/t/*",    "comment": "Short link redirects" },
+          { "/": "/tour/*", "comment": "Tour direct links" },
+          { "/": "/u/*",    "comment": "Public profiles (M3)" },
+          { "/": "/walk/*", "comment": "Walk Together sessions (M5)" }
+        ]
+      }
+    ]
+  }
+}
