@@ -17,6 +17,7 @@ struct ResultsView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var savedVM = SavedToursViewModel()
     @StateObject private var tweakVM = TourViewModel()
+    @StateObject private var reactionsVM: ReactionsViewModel
     @State private var showLiveTour = false
     @State private var completedStopIndices: Set<Int> = []   // populated when user reviews after completing
     @State private var tourProgress: [StopProgress]? = nil  // user photos/notes per stop, set after completing
@@ -39,6 +40,7 @@ struct ResultsView: View {
         self.generationParams = generationParams
         self.onBack = onBack
         _currentTour = State(initialValue: tour)
+        _reactionsVM = StateObject(wrappedValue: ReactionsViewModel(shareToken: tour.share_token))
         let stopCount = max(2, min(5, tour.stops.count))
         _tweakStops = State(initialValue: Double(stopCount))
         _tweakPrice = State(initialValue: 3)
@@ -123,6 +125,7 @@ struct ResultsView: View {
                                     isShuffling: shufflingIndex == idx,
                                     isSmartShuffling: smartShufflingIndex == idx,
                                     smartShuffleError: smartShuffleErrorIndex == idx ? smartShuffleError : nil,
+                                    reactionsVM: reactionsVM,
                                     onStartHere: { showLiveTour = true },
                                     onShuffle: shuffleAction,
                                     onSmartShuffle: smartShuffleAction
@@ -142,6 +145,7 @@ struct ResultsView: View {
             .background(Color("Cream"))
             .overlay(alignment: .top) { navRow }
         }
+        .task { await reactionsVM.load() }
         .ignoresSafeArea(edges: .bottom)
         .navigationBarBackButtonHidden(true)
         .darkStatusBar()
@@ -198,6 +202,11 @@ struct ResultsView: View {
             Text(tourMetaLine)
                 .scaledFont(size: 13)
                 .foregroundColor(Color("SlateMid"))
+
+            // Tour-level reactions
+            ReactionBar(vm: reactionsVM, stopIndex: nil)
+                .padding(.horizontal, -20)  // cancel parent padding so pills flush-left
+                .padding(.top, 10)
 
             // Completion summary — only shown when returning from Live Tour
             if !completedStopIndices.isEmpty {
@@ -542,6 +551,7 @@ struct StopCard: View {
     let isShuffling: Bool
     let isSmartShuffling: Bool
     let smartShuffleError: String?
+    let reactionsVM: ReactionsViewModel
     let onStartHere: () -> Void
     let onShuffle: (() -> Void)?
     let onSmartShuffle: ((String) -> Void)?
@@ -807,7 +817,11 @@ struct StopCard: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
-            .padding(.bottom, 16)
+            .padding(.bottom, 8)
+
+            // Stop-level reactions
+            ReactionBar(vm: reactionsVM, stopIndex: index)
+                .padding(.bottom, 12)
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 12))
