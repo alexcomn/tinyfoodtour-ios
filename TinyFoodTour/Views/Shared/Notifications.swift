@@ -12,4 +12,10 @@ extension Notification.Name {
     // entirely and return to HomeView (the "←" back chevron on Results).
     // Unlike `.buildAnotherTour`, this actually pops QuizView off the stack.
     static let backToHome = Notification.Name("tft.backToHome")
+
+    // Posted when the user wants to go to their profile from anywhere deep
+    // in the tour stack (e.g. post-tour completion screen, results review).
+    // QuizView observes this and dismisses (same as backToHome); HomeView
+    // also observes it and opens the profile sheet once it's the frontmost view.
+    static let goToProfile = Notification.Name("tft.goToProfile")
 }

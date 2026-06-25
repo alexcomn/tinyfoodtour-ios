@@ -121,6 +121,17 @@ struct HomeView: View {
         .task {
             await savedToursVM.load()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .goToProfile)) { _ in
+            // Brief delay lets QuizView's dismiss() animation complete first
+            // so the profile sheet presents onto HomeView, not a departing nav stack.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                if authVM.currentUser != nil {
+                    showProfile = true
+                } else {
+                    showAuth = true
+                }
+            }
+        }
         // Note: "Build another tour →" no longer needs a handler here —
         // QuizView resets itself in place (see QuizView's .buildAnotherTour
         // handler) without leaving HomeView's nav stack, so `showQuiz`

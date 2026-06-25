@@ -114,7 +114,7 @@ struct Tour: Codable, Identifiable, Equatable {
         if let raw = try? c.decode(AnyCodable.self, forKey: .stops),
            let arr = raw.value as? [[String: Any]] {
             // Pull metadata from the _meta stop (§4.8 brief)
-            if let metaStop = arr.first(where: { $0["_meta"] as? Bool == true }),
+            if let metaStop = arr.first(where: { $0["_meta"] is [String: Any] }),
                let meta = metaStop["_meta"] as? [String: Any] {
                 extractedTitle = meta["tour_title"] as? String
                 extractedMiles = meta["total_distance_miles"] as? Double
@@ -122,7 +122,7 @@ struct Tour: Codable, Identifiable, Equatable {
                 extractedMealType = meta["meal_type"] as? String  // §4.8: persisted for label keying
             }
             let decoded = arr
-                .filter { $0["_meta"] as? Bool != true }
+                .filter { !($0["_meta"] is [String: Any]) }
                 .compactMap { dict -> TourStop? in
                     guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
                     return try? JSONDecoder().decode(TourStop.self, from: data)

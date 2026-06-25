@@ -31,6 +31,11 @@ struct QuizView: View {
         .onReceive(NotificationCenter.default.publisher(for: .backToHome)) { _ in
             dismiss()
         }
+        // "Go to my profile" from post-tour screens: pop back to HomeView
+        // (HomeView handles opening the profile sheet from its own handler).
+        .onReceive(NotificationCenter.default.publisher(for: .goToProfile)) { _ in
+            dismiss()
+        }
         .navigationDestination(isPresented: $navigateToGenerating) {
             GeneratingView(answers: vm.answers)
                 

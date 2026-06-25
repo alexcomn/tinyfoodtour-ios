@@ -26,15 +26,13 @@ final class MenuViewModel: ObservableObject {
     @Published var error: String?
     @Published var collapsedSections: Set<Int> = []
 
-    func load(url: String, restaurantName: String, tourId: String? = nil, stopIndex: Int? = nil) async {
+    func load(url: String?, restaurantName: String, address: String? = nil, tourId: String? = nil, stopIndex: Int? = nil) async {
         isLoading = true
         error = nil
         menuData = nil
         collapsedSections = []
 
         // 1. Check if menu_items already exist in our Supabase DB for this stop.
-        //    The web app scans & caches menu items there — reuse them instead of
-        //    calling fetch-menu every time.
         if let tid = tourId, let idx = stopIndex {
             struct Row: Codable {
                 let item_name: String
@@ -47,7 +45,6 @@ final class MenuViewModel: ObservableObject {
                 filters: ["tour_id": "eq.\(tid)", "stop_index": "eq.\(idx)"],
                 order: "created_at"
             ), !rows.isEmpty {
-                // Convert flat rows → single section named after the restaurant
                 let items = rows.map { MenuItemData(name: $0.item_name, price: $0.item_price, description: $0.item_description) }
                 menuData = MenuData(sections: [MenuSection(title: restaurantName, items: items)], note: nil, error: nil)
                 isLoading = false
@@ -55,21 +52,31 @@ final class MenuViewModel: ObservableObject {
             }
         }
 
-        // 2. DB miss → call fetch-menu edge function (scrapes the website)
+        // 2. DB miss — call fetch-menu with the best available URL + restaurant context.
+        //    Pass address so the edge function can do its own URL discovery if scraping fails.
+        //    Skip the call entirely when there's no URL to scrape.
+        guard let fetchURL = url, !fetchURL.isEmpty else {
+            error = "no_url"
+            isLoading = false
+            return
+        }
+
         do {
+            var body: [String: String] = ["url": fetchURL, "restaurant_name": restaurantName]
+            if let addr = address { body["address"] = addr }
             let data: MenuData = try await SupabaseService.shared.invokeFunction(
                 name: "fetch-menu",
-                body: ["url": url, "restaurant_name": restaurantName]
+                body: body
             )
             if let err = data.error {
                 error = err
             } else if data.sections.isEmpty {
-                error = data.note ?? "No menu items found on this website."
+                error = data.note ?? "No menu items found."
             } else {
                 menuData = data
             }
         } catch {
-            self.error = "Couldn't load the menu. Try viewing the website directly."
+            self.error = "Couldn't load the menu."
         }
         isLoading = false
     }
@@ -89,10 +96,12 @@ final class MenuViewModel: ObservableObject {
 
 // MARK: - Sheet view (mirrors MenuViewer.tsx)
 struct MenuViewerSheet: View {
-    let url: String
+    let url: String?
     let restaurantName: String
-    var tourId: String? = nil      // pass to query menu_items first
-    var stopIndex: Int? = nil      // pass to query menu_items first
+    var address: String? = nil
+    var websiteURL: String? = nil
+    var tourId: String? = nil
+    var stopIndex: Int? = nil
 
     @StateObject private var vm = MenuViewModel()
     @Environment(\.dismiss) var dismiss
@@ -112,8 +121,8 @@ struct MenuViewerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    if let url = URL(string: url) {
-                        Link(destination: url) {
+                    if let raw = url ?? websiteURL, let u = URL(string: raw) {
+                        Link(destination: u) {
                             Image(systemName: "arrow.up.right.square")
                                 .foregroundColor(Color("SlateMid"))
                         }
@@ -126,7 +135,6 @@ struct MenuViewerSheet: View {
                             .foregroundColor(Color("SlateMid"))
                     }
                 }
-                // Collapse/expand all when multiple sections
                 if let data = vm.menuData, data.sections.count > 1 {
                     ToolbarItem(placement: .bottomBar) {
                         Button(vm.allCollapsed ? "Expand all" : "Collapse all") {
@@ -141,7 +149,7 @@ struct MenuViewerSheet: View {
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
-        .task { await vm.load(url: url, restaurantName: restaurantName, tourId: tourId, stopIndex: stopIndex) }
+        .task { await vm.load(url: url, restaurantName: restaurantName, address: address, tourId: tourId, stopIndex: stopIndex) }
     }
 
     private var loadingView: some View {
@@ -157,17 +165,60 @@ struct MenuViewerSheet: View {
     }
 
     private func errorView(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Text(message)
-                .scaledFont(size: 14)
-                .foregroundColor(Color("SlateMid"))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-            if let url = URL(string: url) {
-                Link(destination: url) {
-                    Label("Open website", systemImage: "arrow.up.right.square")
-                        .scaledFont(size: 14)
-                        .foregroundColor(Color("Primary"))
+        let isNoURL = message == "no_url"
+        let googleQuery = "\(restaurantName) menu".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let googleURL = URL(string: "https://www.google.com/search?q=\(googleQuery)")
+        let yelpQuery = restaurantName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let yelpURL = URL(string: "yelp://search?terms=\(yelpQuery)") ?? URL(string: "https://www.yelp.com/search?find_desc=\(yelpQuery)")
+
+        return VStack(spacing: 20) {
+            Image(systemName: "fork.knife")
+                .scaledFont(size: 28)
+                .foregroundColor(Color("SlateMid").opacity(0.5))
+
+            VStack(spacing: 6) {
+                Text(isNoURL ? "Menu not yet in our system" : "Couldn't load the menu")
+                    .scaledFont(size: 15, weight: .medium)
+                    .foregroundColor(Color("TFTSlate"))
+                Text(isNoURL
+                     ? "We don't have a menu URL for this spot yet. Try one of these:"
+                     : "The menu couldn't be scraped. Try one of these:")
+                    .scaledFont(size: 13)
+                    .foregroundColor(Color("SlateMid"))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
+            VStack(spacing: 10) {
+                if let u = googleURL {
+                    Link(destination: u) {
+                        Label("Search on Google", systemImage: "magnifyingglass")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color("Primary"))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .padding(.horizontal, 32)
+                }
+                if let u = yelpURL {
+                    Link(destination: u) {
+                        Label("Open in Yelp", systemImage: "star")
+                            .scaledFont(size: 14)
+                            .foregroundColor(Color("TFTSlate"))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.15), lineWidth: 1))
+                    }
+                    .padding(.horizontal, 32)
+                }
+                if let raw = websiteURL ?? url, let u = URL(string: raw) {
+                    Link(destination: u) {
+                        Label("Open website", systemImage: "arrow.up.right.square")
+                            .scaledFont(size: 13)
+                            .foregroundColor(Color("SlateMid"))
+                    }
                 }
             }
         }
@@ -196,7 +247,7 @@ struct MenuViewerSheet: View {
                 }
 
                 // Footer link
-                if let url = URL(string: url) {
+                if let rawURL = url ?? websiteURL, let url = URL(string: rawURL) {
                     Divider()
                     Link(destination: url) {
                         Label("View full website", systemImage: "arrow.up.right.square")

@@ -43,8 +43,7 @@ struct TourCompleteView: View {
         }
         .sheet(isPresented: $isSharePresented) {
             if let img = shareImage {
-                let shareURL = URL(string: "tinyfoodtour://tour/\(tour.share_token)")
-                ShareSheet(items: shareURL.map { [img, $0] } ?? [img])
+                ShareSheet(items: [img])
                     .presentationDetents([.medium, .large])
             }
         }
@@ -200,6 +199,16 @@ struct TourCompleteView: View {
                     .foregroundColor(.white.opacity(0.55))
             }
             .buttonStyle(.plain)
+
+            // Quaternary: go to profile / dashboard
+            Button {
+                NotificationCenter.default.post(name: .goToProfile, object: nil)
+            } label: {
+                Text("Go to my profile →")
+                    .scaledFont(size: 13)
+                    .foregroundColor(.white.opacity(0.40))
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -208,9 +217,7 @@ struct TourCompleteView: View {
     @MainActor
     private func generateAndShare() async {
         isRenderingShare = true
-        // Pre-render the route map synchronously before ImageRenderer runs —
-        // ImageRenderer is synchronous and won't wait for async MKMapSnapshotter.
-        let mapImg = await renderRouteMapImage()
+        let mapImg = await renderTourRouteMapImage(stops: tour.stops)
         let cardView = TourShareCardView(tour: tour, progress: progress, mapImage: mapImg)
         let renderer = ImageRenderer(content: cardView)
         renderer.scale = 3.0
@@ -218,61 +225,63 @@ struct TourCompleteView: View {
         isRenderingShare = false
         isSharePresented = true
     }
+}
 
-    private func renderRouteMapImage() async -> UIImage? {
-        let cardWidth: CGFloat = 390
-        let mapHeight: CGFloat = 160
-        let stops = tour.stops
-        guard !stops.isEmpty else { return nil }
-        guard let region = RouteMapFraming.fitRegion(
-            stops: stops, aspect: cardWidth / mapHeight
-        ) else { return nil }
+// MARK: - Shared map snapshot utility
+// Called by both TourCompleteView (post-tour) and ResultsView (pre-tour share).
 
-        let options = MKMapSnapshotter.Options()
-        options.size = CGSize(width: cardWidth, height: mapHeight)
-        options.scale = 3
-        options.mapType = .standard
-        options.region = region
-        guard let snap = try? await MKMapSnapshotter(options: options).start() else { return nil }
+func renderTourRouteMapImage(stops: [TourStop]) async -> UIImage? {
+    let cardWidth: CGFloat = 390
+    let mapHeight: CGFloat = 160
+    guard !stops.isEmpty else { return nil }
+    guard let region = RouteMapFraming.fitRegion(
+        stops: stops, aspect: cardWidth / mapHeight
+    ) else { return nil }
 
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 3
-        return UIGraphicsImageRenderer(
-            size: CGSize(width: cardWidth, height: mapHeight), format: format
-        ).image { _ in
-            snap.image.draw(at: .zero)
-            let bounds = CGRect(origin: .zero, size: CGSize(width: cardWidth, height: mapHeight))
-            let points = stops.compactMap { s -> CGPoint? in
-                guard let lat = s.lat, let lng = s.lng else { return nil }
-                let pt = snap.point(for: CLLocationCoordinate2D(latitude: lat, longitude: lng))
-                return bounds.contains(pt) ? pt : nil
-            }
-            if points.count > 1 {
-                let path = UIBezierPath()
-                path.move(to: points[0])
-                for pt in points.dropFirst() { path.addLine(to: pt) }
-                path.lineWidth = 2.5
-                path.setLineDash([6, 5], count: 2, phase: 0)
-                UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 0.9).setStroke()
-                path.stroke()
-            }
-            for (i, pt) in points.enumerated() {
-                let r: CGFloat = 11
-                UIColor.white.setFill()
-                UIBezierPath(ovalIn: CGRect(x: pt.x-r-2, y: pt.y-r-2, width: (r+2)*2, height: (r+2)*2)).fill()
-                UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 1).setFill()
-                UIBezierPath(ovalIn: CGRect(x: pt.x-r, y: pt.y-r, width: r*2, height: r*2)).fill()
-                let label = String(format: "%02d", i + 1) as NSString
-                let attrs: [NSAttributedString.Key: Any] = [
-                    .font: UIFont.systemFont(ofSize: 9, weight: .bold),
-                    .foregroundColor: UIColor.white
-                ]
-                let ts = label.size(withAttributes: attrs)
-                label.draw(
-                    in: CGRect(x: pt.x-ts.width/2, y: pt.y-ts.height/2, width: ts.width, height: ts.height),
-                    withAttributes: attrs
-                )
-            }
+    let options = MKMapSnapshotter.Options()
+    options.size = CGSize(width: cardWidth, height: mapHeight)
+    options.scale = 3
+    options.mapType = .standard
+    options.region = region
+    guard let snap = try? await MKMapSnapshotter(options: options).start() else { return nil }
+
+    let format = UIGraphicsImageRendererFormat()
+    format.scale = 3
+    return UIGraphicsImageRenderer(
+        size: CGSize(width: cardWidth, height: mapHeight), format: format
+    ).image { _ in
+        snap.image.draw(at: .zero)
+        let bounds = CGRect(origin: .zero, size: CGSize(width: cardWidth, height: mapHeight))
+        let points = stops.compactMap { s -> CGPoint? in
+            guard let lat = s.lat, let lng = s.lng else { return nil }
+            let pt = snap.point(for: CLLocationCoordinate2D(latitude: lat, longitude: lng))
+            return bounds.contains(pt) ? pt : nil
+        }
+        if points.count > 1 {
+            let path = UIBezierPath()
+            path.move(to: points[0])
+            for pt in points.dropFirst() { path.addLine(to: pt) }
+            path.lineWidth = 2.5
+            path.setLineDash([6, 5], count: 2, phase: 0)
+            UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 0.9).setStroke()
+            path.stroke()
+        }
+        for (i, pt) in points.enumerated() {
+            let r: CGFloat = 11
+            UIColor.white.setFill()
+            UIBezierPath(ovalIn: CGRect(x: pt.x-r-2, y: pt.y-r-2, width: (r+2)*2, height: (r+2)*2)).fill()
+            UIColor(red: 0.608, green: 0.098, blue: 0.239, alpha: 1).setFill()
+            UIBezierPath(ovalIn: CGRect(x: pt.x-r, y: pt.y-r, width: r*2, height: r*2)).fill()
+            let label = String(format: "%02d", i + 1) as NSString
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: 9, weight: .bold),
+                .foregroundColor: UIColor.white
+            ]
+            let ts = label.size(withAttributes: attrs)
+            label.draw(
+                in: CGRect(x: pt.x-ts.width/2, y: pt.y-ts.height/2, width: ts.width, height: ts.height),
+                withAttributes: attrs
+            )
         }
     }
 }

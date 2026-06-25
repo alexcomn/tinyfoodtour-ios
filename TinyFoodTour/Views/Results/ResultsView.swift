@@ -29,6 +29,9 @@ struct ResultsView: View {
     @State private var showTweaks = false
     @State private var tweakStops: Double
     @State private var tweakPrice: Double
+    @State private var isRenderingShareImage = false
+    @State private var shareCardImage: UIImage? = nil
+    @State private var isShareCardPresented = false
 
     init(tour: Tour, isShared: Bool, generationParams: QuizAnswers?, onBack: (() -> Void)? = nil) {
         self.tour = tour
@@ -440,16 +443,15 @@ struct ResultsView: View {
                     .buttonStyle(.plain)
                 }
 
-                // Share + Save row
+                // Save + Share (image) + Share (link)
                 HStack(spacing: 16) {
-                    // Save bookmark — writes to UserDefaults + Supabase when signed in
                     Button {
                         Task {
                             await savedVM.saveTour(tour: currentTour, userId: authVM.currentUser?.id)
                             isSaved = true
                         }
                     } label: {
-                        Label(isSaved ? "Saved!" : "Save tour",
+                        Label(isSaved ? "Saved!" : "Save",
                               systemImage: isSaved ? "bookmark.fill" : "bookmark")
                             .scaledFont(size: 14)
                             .foregroundColor(isSaved ? Color("Radish") : Color("SlateMid"))
@@ -457,23 +459,68 @@ struct ResultsView: View {
 
                     Spacer()
 
-                    // Native iOS share sheet — shares tinyfoodtour.com/tour/{token}
+                    // Share card image
+                    Button {
+                        Task { await generateShareCardImage() }
+                    } label: {
+                        if isRenderingShareImage {
+                            ProgressView().tint(Color("SlateMid")).scaleEffect(0.75)
+                        } else {
+                            Image(systemName: "camera")
+                                .scaledFont(size: 15)
+                                .foregroundColor(Color("SlateMid"))
+                        }
+                    }
+                    .disabled(isRenderingShareImage)
+
+                    // Share link
                     if let shareURL = URL(string: "https://tinyfoodtour.com/tour/\(currentTour.share_token)") {
                         ShareLink(
                             item: shareURL,
                             subject: Text(currentTour.displayTitle),
                             message: Text("Check out this food tour I built on Tiny Food Tour!")
                         ) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .scaledFont(size: 14)
+                            Image(systemName: "link")
+                                .scaledFont(size: 15)
                                 .foregroundColor(Color("SlateMid"))
                         }
                     }
+                }
+
+                // "Go to my profile" — shown after completing the tour
+                if tourProgress != nil {
+                    Button {
+                        NotificationCenter.default.post(name: .goToProfile, object: nil)
+                    } label: {
+                        Text("Go to my profile →")
+                            .scaledFont(size: 13)
+                            .foregroundColor(Color("SlateMid"))
+                            .frame(maxWidth: .infinity, alignment: .center)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 24)
+        .sheet(isPresented: $isShareCardPresented) {
+            if let img = shareCardImage {
+                ShareSheet(items: [img])
+                    .presentationDetents([.medium, .large])
+            }
+        }
+    }
+
+    @MainActor
+    private func generateShareCardImage() async {
+        isRenderingShareImage = true
+        let mapImg = await renderTourRouteMapImage(stops: currentTour.stops)
+        let cardView = TourShareCardView(tour: currentTour, progress: tourProgress ?? [], mapImage: mapImg)
+        let renderer = ImageRenderer(content: cardView)
+        renderer.scale = 3.0
+        shareCardImage = renderer.uiImage
+        isRenderingShareImage = false
+        isShareCardPresented = true
     }
 }
 
@@ -771,8 +818,14 @@ struct StopCard: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(stopLabel): \(stop.name). \(cuisineDisplay)\(priceDisplay.isEmpty ? "" : ", \(priceDisplay)").")
         .sheet(isPresented: $showMenu) {
-            MenuViewerSheet(url: menuURLString, restaurantName: stop.name,
-                           tourId: tourId, stopIndex: index)
+            MenuViewerSheet(
+                url: menuURL,
+                restaurantName: stop.name,
+                address: stop.address,
+                websiteURL: stop.website_url,
+                tourId: tourId,
+                stopIndex: index
+            )
         }
     }
 
@@ -834,24 +887,19 @@ struct StopCard: View {
         }
     }
 
-    // Always returns a URL for the menu viewer — prefers menu_url, then
-    // website_url, then falls back to a Google search so the button is
-    // always visible and the viewer shows a graceful error/fallback.
-    private var menuURLString: String {
+    // Returns the best available URL for menu scraping: prefers menu_url,
+    // then website_url. Returns nil when neither is available so MenuViewerSheet
+    // can skip the fetch-menu call and go straight to a rich fallback state.
+    private var menuURL: String? {
         if let m = stop.menu_url, !m.isEmpty { return m }
         if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return w }
-        let q = "\(stop.name) menu".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return "https://www.google.com/search?q=\(q)"
+        return nil
     }
 
     // Always shows at least Directions. Shows menu/website when available.
     @ViewBuilder
     private func linkButton(for stop: TourStop) -> some View {
-        let menuURL: URL? = {
-            if let m = stop.menu_url, !m.isEmpty { return URL(string: m) }
-            if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return URL(string: w) }
-            return nil
-        }()
+        let menuURL: URL? = self.menuURL.flatMap(URL.init)
         // Prefer coordinate-based Apple Maps: always works on iOS, no "No results found"
         let mapsURL: URL = {
             if let lat = stop.lat, let lng = stop.lng {
