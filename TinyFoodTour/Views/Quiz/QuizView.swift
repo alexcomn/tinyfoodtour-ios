@@ -18,7 +18,17 @@ struct QuizView: View {
         }
         .navigationBarBackButtonHidden(true)
         .darkStatusBar()
+        // "Build another tour →": GeneratingView pops itself off the stack
+        // (its own .onReceive below), revealing this QuizView again. Reset
+        // its state to step 1 instead of dismissing — dismissing here would
+        // require HomeView's `showQuiz` to flip false→true in the same tick,
+        // which SwiftUI coalesces into a no-op, leaving this *same* instance
+        // (at its old step) visible. Resetting in place is reliable.
         .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            vm.reset()
+        }
+        // "← back" chevron from Results: actually pop back to HomeView.
+        .onReceive(NotificationCenter.default.publisher(for: .backToHome)) { _ in
             dismiss()
         }
         .navigationDestination(isPresented: $navigateToGenerating) {
@@ -45,7 +55,7 @@ struct QuizView: View {
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 16) {
             Text(message)
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             CTAButton(title: "Try again", isEnabled: true) {
@@ -67,7 +77,7 @@ struct QuizView: View {
                     .padding(.horizontal, 20)
 
                 Text("Step \(vm.stepIndex + 1) of \(vm.totalSteps)")
-                    .font(.system(size: 11))
+                    .scaledFont(size: 11)
                     .foregroundColor(.secondary)
                     .padding(.top, 4)
                     .padding(.bottom, 16)
@@ -83,7 +93,7 @@ struct QuizView: View {
 
                     if !vm.currentHint.isEmpty {
                         Text(vm.currentHint)
-                            .font(.system(size: 13))
+                            .scaledFont(size: 13)
                             .italic()
                             .foregroundColor(Color("SlateMid"))
                             .padding(.horizontal, 20)
@@ -135,7 +145,7 @@ struct QuizView: View {
                 if shouldDismiss { dismiss() }
             } label: {
                 Text("← Back")
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .foregroundColor(.secondary)
             }
             Spacer()

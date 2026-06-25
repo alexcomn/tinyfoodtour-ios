@@ -8,6 +8,7 @@ struct ProfileView: View {
     @State private var selectedTour: Tour?
     @State private var renamingToken: String?
     @State private var renameDraft = ""
+    @State private var selectedPhoto: ProfilePhoto?
 
     var body: some View {
         NavigationStack {
@@ -17,6 +18,14 @@ struct ProfileView: View {
                     statsRow
                     Divider().padding(.vertical, 8)
                     savedToursSection
+                    if !vm.allTours.isEmpty {
+                        Divider().padding(.vertical, 8)
+                        tourHistorySection
+                    }
+                    if !vm.photos.isEmpty {
+                        Divider().padding(.vertical, 8)
+                        photosSection
+                    }
                     if !vm.favorites.isEmpty {
                         Divider().padding(.vertical, 8)
                         favoritesSection
@@ -47,6 +56,9 @@ struct ProfileView: View {
                             }
                         }
                 }
+            }
+            .sheet(item: $selectedPhoto) { photo in
+                PhotoFullScreenView(url: photo.url, neighborhood: photo.neighborhood)
             }
             .alert("Rename tour", isPresented: .init(
                 get: { renamingToken != nil },
@@ -94,7 +106,7 @@ struct ProfileView: View {
                                 Task { await vm.saveDisplayName(userId: id) }
                             }
                         }
-                        .font(.system(size: 13, weight: .medium))
+                        .scaledFont(size: 13, weight: .medium)
                         .foregroundColor(Color("Primary"))
                     }
                 }
@@ -110,7 +122,7 @@ struct ProfileView: View {
                         vm.editingDisplayName = true
                     } label: {
                         Image(systemName: "pencil")
-                            .font(.system(size: 12))
+                            .scaledFont(size: 12)
                             .foregroundColor(Color("SlateMid"))
                     }
                     .buttonStyle(.plain)
@@ -119,7 +131,7 @@ struct ProfileView: View {
 
             if let email = authVM.currentUser?.email {
                 Text(email)
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundColor(Color("SlateMid"))
             }
         }
@@ -131,11 +143,23 @@ struct ProfileView: View {
     }
 
     // MARK: - Stats
+    // Row 1: tour-level stats (completed · saved · favourites)
+    // Row 2: discovery stats (stops visited · neighbourhoods) — only shown once
+    //        visited_restaurants has data, so new users see a clean 3-stat layout.
     private var statsRow: some View {
-        HStack(spacing: 32) {
-            statPill(value: vm.completedToursCount, label: "completed")
-            statPill(value: vm.savedTours.count, label: "saved")
-            statPill(value: vm.favoritesCount, label: "favourites")
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 32) {
+                statPill(value: vm.completedToursCount, label: "completed")
+                statPill(value: vm.savedTours.count, label: "saved")
+                statPill(value: vm.favoritesCount, label: "favourites")
+            }
+            if vm.totalStopsVisited > 0 || vm.neighborhoodsExplored > 0 {
+                Divider()
+                HStack(spacing: 32) {
+                    statPill(value: vm.totalStopsVisited, label: "stops visited")
+                    statPill(value: vm.neighborhoodsExplored, label: "neighbourhoods")
+                }
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
@@ -147,7 +171,7 @@ struct ProfileView: View {
                 .font(TFTFont.heading(22))
                 .foregroundColor(Color("Primary"))
             Text(label)
-                .font(.system(size: 11))
+                .scaledFont(size: 11)
                 .foregroundColor(Color("SlateMid"))
         }
     }
@@ -162,7 +186,7 @@ struct ProfileView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
             } else if vm.savedTours.isEmpty {
-                emptyState("No saved tours yet.", cta: "Build a tour →") {}
+                emptyState("No saved tours yet.")
             } else {
                 ForEach(vm.savedTours) { profileTour in
                     SavedTourProfileRow(
@@ -208,6 +232,76 @@ struct ProfileView: View {
         }
     }
 
+    // MARK: - Tour History
+    private var tourHistorySection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Tour History (\(vm.allTours.count))")
+            ForEach(vm.allTours) { tour in
+                HistoryTourRow(
+                    profileTour: tour,
+                    onTap: { loadAndShowTour(tour) },
+                    onShare: {
+                        let url = URL(string: "tinyfoodtour://tour/\(tour.shareToken)")!
+                        let items: [Any] = ["\(tour.displayName) — a Tiny Food Tour", url]
+                        let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
+                        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let root = scene.windows.first?.rootViewController {
+                            root.present(av, animated: true)
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    // MARK: - Photos
+    private var photosSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Your Photos (\(vm.photos.count))")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(vm.photos) { photo in
+                        Button {
+                            selectedPhoto = photo
+                        } label: {
+                            ZStack(alignment: .bottomLeading) {
+                                AsyncImage(url: URL(string: photo.url)) { phase in
+                                    switch phase {
+                                    case .success(let img):
+                                        img.resizable().scaledToFill()
+                                    case .failure:
+                                        Color("CreamDark")
+                                            .overlay(Image(systemName: "photo")
+                                                .foregroundColor(Color("SlateMid").opacity(0.4)))
+                                    default:
+                                        Color("CreamDark")
+                                            .overlay(ProgressView().tint(Color("SlateMid")))
+                                    }
+                                }
+                                .frame(width: 110, height: 110)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                                // Neighbourhood label
+                                Text(photo.neighborhood)
+                                    .scaledFont(size: 10, weight: .medium)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 3)
+                                    .background(.black.opacity(0.5))
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    .padding(6)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+            }
+        }
+    }
+
     // MARK: - Favourites
     private var favoritesSection: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -228,7 +322,7 @@ struct ProfileView: View {
                 Image(systemName: "rectangle.portrait.and.arrow.right")
                 Text("Sign out")
             }
-            .font(.system(size: 15))
+            .scaledFont(size: 15)
             .foregroundColor(Color("Radish"))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
@@ -238,23 +332,63 @@ struct ProfileView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 13, weight: .semibold))
+            .scaledFont(size: 13, weight: .semibold)
             .foregroundColor(Color("SlateMid"))
             .padding(.horizontal, 20)
             .padding(.top, 16)
             .padding(.bottom, 8)
     }
 
-    private func emptyState(_ message: String, cta: String, action: @escaping () -> Void) -> some View {
-        VStack(spacing: 12) {
-            Text(message)
-                .font(.system(size: 13))
-                .foregroundColor(Color("SlateMid"))
-                .multilineTextAlignment(.center)
+    private func emptyState(_ message: String) -> some View {
+        Text(message)
+            .scaledFont(size: 13)
+            .foregroundColor(Color("SlateMid"))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+            .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - History tour row (share button instead of rename/delete)
+struct HistoryTourRow: View {
+    let profileTour: ProfileTour
+    let onTap: () -> Void
+    let onShare: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(profileTour.displayName)
+                        .scaledFont(size: 15, weight: .semibold)
+                        .foregroundColor(Color("Foreground"))
+                    HStack(spacing: 4) {
+                        Text("\(profileTour.stopCount) stop\(profileTour.stopCount == 1 ? "" : "s")")
+                        if let date = profileTour.formattedDate {
+                            Text("·").foregroundColor(Color("SlateMid").opacity(0.5))
+                            Text(date)
+                        }
+                    }
+                    .scaledFont(size: 12)
+                    .foregroundColor(Color("SlateMid"))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onShare) {
+                Image(systemName: "square.and.arrow.up")
+                    .scaledFont(size: 13)
+                    .foregroundColor(Color("SlateMid"))
+                    .frame(width: 32, height: 32)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12)))
+            }
+            .buttonStyle(.plain)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
         .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        Divider().padding(.leading, 20)
     }
 }
 
@@ -270,7 +404,7 @@ struct SavedTourProfileRow: View {
             Button(action: onTap) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(profileTour.displayName)
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(size: 15, weight: .semibold)
                         .foregroundColor(Color("Foreground"))
                     // Secondary line: stop count · date saved
                     HStack(spacing: 4) {
@@ -280,7 +414,7 @@ struct SavedTourProfileRow: View {
                             Text(date)
                         }
                     }
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(Color("SlateMid"))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -290,7 +424,7 @@ struct SavedTourProfileRow: View {
             // Rename
             Button(action: onRename) {
                 Image(systemName: "pencil")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundColor(Color("SlateMid"))
                     .frame(width: 32, height: 32)
                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12)))
@@ -300,7 +434,7 @@ struct SavedTourProfileRow: View {
             // Remove
             Button(action: onRemove) {
                 Image(systemName: "trash")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundColor(Color("Radish"))
                     .frame(width: 32, height: 32)
                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color("Radish").opacity(0.25)))
@@ -313,29 +447,114 @@ struct SavedTourProfileRow: View {
     }
 }
 
-// MARK: - Favourite row
+// MARK: - Favourite row (enhanced: cuisine type + directions link)
 struct FavouriteRow: View {
     let spot: FavouriteSpot
+
+    private var directionsURL: URL? {
+        let query = [spot.name, spot.neighborhood].compactMap { $0 }.joined(separator: " ")
+        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return nil }
+        return URL(string: "https://maps.google.com/?q=\(encoded)")
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "heart.fill")
-                .font(.system(size: 12))
+                .scaledFont(size: 12)
                 .foregroundColor(Color("Radish"))
                 .frame(width: 24)
-            VStack(alignment: .leading, spacing: 2) {
+
+            VStack(alignment: .leading, spacing: 3) {
                 Text(spot.name)
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .foregroundColor(Color("Foreground"))
-                if let n = spot.neighborhood {
-                    Text(n)
-                        .font(.system(size: 12))
+
+                // Cuisine · neighbourhood secondary line
+                let parts: [String] = [
+                    spot.cuisineType.map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
+                        .flatMap { $0.isEmpty ? nil : $0 },
+                    spot.neighborhood.flatMap { $0.isEmpty ? nil : $0 }
+                ].compactMap { $0 }
+
+                if !parts.isEmpty {
+                    Text(parts.joined(separator: " · "))
+                        .scaledFont(size: 12)
                         .foregroundColor(Color("SlateMid"))
                 }
             }
+
             Spacer()
+
+            // Directions button
+            if let url = directionsURL {
+                Link(destination: url) {
+                    Image(systemName: "map")
+                        .scaledFont(size: 14)
+                        .foregroundColor(Color("SlateMid"))
+                        .frame(width: 32, height: 32)
+                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.primary.opacity(0.12)))
+                }
+            }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
         Divider().padding(.leading, 56)
+    }
+}
+
+// MARK: - Full-screen photo viewer
+struct PhotoFullScreenView: View {
+    let url: String
+    let neighborhood: String
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color.black.ignoresSafeArea()
+
+            AsyncImage(url: URL(string: url)) { phase in
+                switch phase {
+                case .success(let img):
+                    img
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                case .failure:
+                    VStack(spacing: 12) {
+                        Image(systemName: "photo.slash")
+                            .scaledFont(size: 36)
+                            .foregroundColor(.white.opacity(0.4))
+                        Text("Photo unavailable")
+                            .scaledFont(size: 14)
+                            .foregroundColor(.white.opacity(0.5))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                default:
+                    ProgressView().tint(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+
+            // Top bar: neighbourhood label + close button
+            HStack {
+                Text(neighborhood)
+                    .scaledFont(size: 13, weight: .medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(.black.opacity(0.45))
+                    .clipShape(Capsule())
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .scaledFont(size: 26)
+                        .foregroundColor(.white.opacity(0.8))
+                        .shadow(color: .black.opacity(0.3), radius: 4)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 56)
+        }
+        .presentationBackground(.black)
     }
 }

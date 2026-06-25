@@ -9,7 +9,7 @@ struct NeighborhoodStepView: View {
                 HStack(spacing: 8) {
                     ProgressView().tint(Color("Radish"))
                     Text("Finding neighborhoods near you…")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -41,7 +41,7 @@ struct NeighborhoodStepView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 TextField("Enter a city or zip code", text: $vm.manualQuery)
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(Color(.secondarySystemBackground))
@@ -58,9 +58,9 @@ struct NeighborhoodStepView: View {
                         } else {
                             HStack(spacing: 4) {
                                 Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 13))
+                                    .scaledFont(size: 13)
                                 Text("Search")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .scaledFont(size: 13, weight: .medium)
                             }
                         }
                     }
@@ -75,7 +75,7 @@ struct NeighborhoodStepView: View {
 
             if let error = vm.manualError {
                 Text(error)
-                    .font(.system(size: 12))
+                    .scaledFont(size: 12)
                     .foregroundColor(.red)
             }
         }
@@ -88,7 +88,7 @@ struct NeighborhoodStepView: View {
                     Task { await vm.searchCity(city) }
                 } label: {
                     Text(city.components(separatedBy: ",").first ?? city)
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.primary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
@@ -108,7 +108,7 @@ struct NeighborhoodStepView: View {
         HStack(spacing: 8) {
             Rectangle().fill(Color.primary.opacity(0.1)).frame(height: 1)
             Text(label)
-                .font(.system(size: 11))
+                .scaledFont(size: 11)
                 .foregroundColor(.secondary)
                 .fixedSize()
             Rectangle().fill(Color.primary.opacity(0.1)).frame(height: 1)

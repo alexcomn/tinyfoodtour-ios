@@ -12,19 +12,29 @@ struct GeneratingView: View {
         // Any presentation mechanism in iOS 26 — fullScreenCover, UIKit modal,
         // animated or not — carries a residual coordinate transform that shifts
         // content beyond the viewport. Inline conditional rendering avoids all of it.
-        if showResults, let tour = vm.tour {
-            ResultsView(
-                tour: tour,
-                isShared: false,
-                generationParams: answers,
-                onBack: {
-                    // Unwind the whole stack back to HomeView
-                    NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
-                }
-            )
-            .environmentObject(authVM)
-        } else {
-            generatingContent
+        Group {
+            if showResults, let tour = vm.tour {
+                ResultsView(
+                    tour: tour,
+                    isShared: false,
+                    generationParams: answers,
+                    onBack: {
+                        // Unwind the whole stack back to HomeView
+                        NotificationCenter.default.post(name: .backToHome, object: nil)
+                    }
+                )
+                .environmentObject(authVM)
+            } else {
+                generatingContent
+            }
+        }
+        // Attached at the top level (not just `generatingContent`) so these
+        // fire regardless of whether Results/Live Tour is currently showing.
+        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
+            dismiss()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .backToHome)) { _ in
+            dismiss()
         }
     }
 
@@ -42,18 +52,24 @@ struct GeneratingView: View {
                         .tint(Color("Radish"))
                         .scaleEffect(1.2)
 
-                    Text(vm.generatingMessage)
-                        .font(.system(size: 14))
-                        .foregroundColor(Color("Radish"))
-                        .animation(.easeInOut(duration: 0.3), value: vm.generatingMessage)
+                    // Fixed-height container prevents other elements from
+                    // jumping when the message text changes length or wraps.
+                    ZStack {
+                        Text(vm.generatingMessage)
+                            .scaledFont(size: 14)
+                            .foregroundColor(Color("Radish"))
+                            .multilineTextAlignment(.center)
+                            .id(vm.generatingMessage)
+                            .transition(.opacity)
+                    }
+                    .frame(height: 44)
+                    .animation(.easeInOut(duration: 0.35), value: vm.generatingMessage)
                 }
+                .frame(maxWidth: .infinity)
             }
         }
         .navigationBarBackButtonHidden(true)
         .lightStatusBar()
-        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
-            dismiss()
-        }
         .task {
             await vm.generate(answers: answers)
             if vm.tour != nil { showResults = true }
@@ -64,9 +80,9 @@ struct GeneratingView: View {
         VStack(spacing: 16) {
             BrandMarkView(fontSize: 11)
             Text("Tour generation hit a snag")
-                .font(.system(size: 15, weight: .medium))
+                .scaledFont(size: 15, weight: .medium)
             Text(error)
-                .font(.system(size: 13))
+                .scaledFont(size: 13)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -78,7 +94,7 @@ struct GeneratingView: View {
                     }
                 } label: {
                     Text("Try again")
-                        .font(.system(size: 14, weight: .medium))
+                        .scaledFont(size: 14, weight: .medium)
                         .foregroundColor(.white)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
@@ -87,7 +103,7 @@ struct GeneratingView: View {
                 }
                 Button { dismiss() } label: {
                     Text("Start over")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 10)
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.primary.opacity(0.2)))

@@ -4,12 +4,13 @@ import SwiftUI
 // Josefin Sans Medium (500), uppercase, letter-spacing ~0.14em (1.96px @ 14px).
 struct BrandMarkView: View {
     var fontSize: CGFloat = 11
+    var color: Color = Color("Foreground")
 
     var body: some View {
         Text("TINY FOOD TOUR")
             .font(TFTFont.wordmark(fontSize))   // JosefinSans-Medium (bundled)
             .tracking(fontSize * 0.14)
-            .foregroundColor(Color("Foreground"))
+            .foregroundColor(color)
     }
 }
 
@@ -22,7 +23,7 @@ struct PillButton: View {
     var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundColor(Color("Foreground"))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
@@ -48,7 +49,7 @@ struct CTAButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(size: 15, weight: .semibold)
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)

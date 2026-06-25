@@ -43,5 +43,16 @@
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.tinyfoodtour.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tinyfoodtour</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

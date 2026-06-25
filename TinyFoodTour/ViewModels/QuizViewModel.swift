@@ -159,6 +159,8 @@ final class QuizViewModel: ObservableObject {
     func geolocate() async {
         isLoadingNeighborhoods = true
         locationDenied = false
+        // Clear any cached location so the service always requests a fresh fix.
+        LocationService.shared.location = nil
         do {
             let loc = try await LocationService.shared.requestLocation()
             await fetchNeighborhoods(body: ["lat": loc.coordinate.latitude, "lng": loc.coordinate.longitude])
@@ -205,7 +207,14 @@ final class QuizViewModel: ObservableObject {
                 locationDenied = true
             }
         } catch {
-            manualError = "Something went wrong. Please try again."
+            print("⚠️ [fetch-neighborhoods] \(error)")
+            if let sErr = error as? SupabaseError, case .httpError(_, let msg) = sErr {
+                manualError = msg.isEmpty ? "Something went wrong. Please try again." : msg
+            } else {
+                manualError = SupabaseService.isNetworkError(error)
+                    ? "No internet connection. Check your connection and try again."
+                    : "Something went wrong. Please try again."
+            }
             locationDenied = true
         }
         isLoadingNeighborhoods = false
@@ -304,6 +313,14 @@ final class QuizViewModel: ObservableObject {
             return false
         }
         return true // back to Home
+    }
+
+    // Returns the quiz to a fresh first step — used when "Build another
+    // tour →" fires `.buildAnotherTour` and unwinds GeneratingView back to
+    // this (still-alive) QuizView instance.
+    func reset() {
+        stepIndex = 0
+        answers = QuizAnswers()
     }
 }
 

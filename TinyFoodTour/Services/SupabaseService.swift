@@ -124,6 +124,57 @@ final class SupabaseService {
     }
 
     // MARK: - Auth
+    /// Exchange an Apple/Google identity token for a Supabase session.
+    /// `nonce` is the raw (unhashed) nonce — Supabase SHA-256 hashes it and
+    /// compares to what Apple embedded in the JWT.
+    func signInWithIdToken(provider: String, idToken: String, nonce: String) async throws -> AuthResponse {
+        var request = URLRequest(url: URL(string: "\(supabaseURL)/auth/v1/token?grant_type=id_token")!)
+        request.httpMethod = "POST"
+        baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        request.httpBody = try JSONEncoder().encode([
+            "provider": provider,
+            "id_token": idToken,
+            "nonce": nonce
+        ])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateResponse(response, data: data)
+        return try JSONDecoder().decode(AuthResponse.self, from: data)
+    }
+
+    /// Fetch a tour by its public share token — used by deep link handler.
+    func fetchTour(byShareToken token: String) async throws -> Tour? {
+        struct TourRow: Codable {
+            let id: String; let neighborhood: String; let vibe: [String]
+            let dietary: [String]; let walk_distance: String; let stops: AnyCodable
+            let created_at: String; let user_id: String?; let share_token: String
+            let tour_title: String?; let total_distance_miles: Double?
+        }
+        let rows: [TourRow] = try await query(
+            table: "tours", select: "*",
+            filters: ["share_token": "eq.\(token)"]
+        )
+        guard let row = rows.first else { return nil }
+
+        let stops: [TourStop]
+        if let arr = row.stops.value as? [[String: Any]] {
+            stops = arr.filter { $0["_meta"] as? Bool != true }
+                .compactMap { dict -> TourStop? in
+                    guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+                    return try? JSONDecoder().decode(TourStop.self, from: data)
+                }
+        } else { stops = [] }
+
+        return Tour(
+            id: row.id, neighborhood: row.neighborhood,
+            vibe: row.vibe, dietary: row.dietary,
+            walk_distance: row.walk_distance, stops: stops,
+            created_at: row.created_at, user_id: row.user_id,
+            share_token: row.share_token,
+            tourTitle: row.tour_title,
+            totalDistanceMiles: row.total_distance_miles
+        )
+    }
+
     func signUp(email: String, password: String) async throws -> AuthResponse {
         try await authRequest(endpoint: "signup", email: email, password: password)
     }

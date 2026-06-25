@@ -22,7 +22,7 @@ struct HomeView: View {
 
                         // Eyebrow — orange tracked label (web: text-tft-orange, tracking)
                         Text("A WALKING FOOD TOUR, BUILT FOR YOU")
-                            .font(.system(size: 10, weight: .medium))
+                            .scaledFont(size: 10, weight: .medium)
                             .tracking(1.8)
                             .foregroundColor(Color("TFTOrange"))
                             .padding(.bottom, 10)
@@ -36,7 +36,7 @@ struct HomeView: View {
 
                         // Body — matches web copy exactly
                         Text("Tell us where you are and what you like. We'll build a food tour around you: personalized stops, all on foot.")
-                            .font(.system(size: 15))
+                            .scaledFont(size: 15)
                             .foregroundColor(Color("SlateMid"))
                             .lineSpacing(3)
                             .padding(.bottom, 28)
@@ -46,7 +46,7 @@ struct HomeView: View {
                         }
 
                         Text("Works anywhere in the world")
-                            .font(.system(size: 12))
+                            .scaledFont(size: 12)
                             .foregroundColor(Color("SlateMid"))
                             .padding(.top, 8)
                             .padding(.bottom, 48)
@@ -121,10 +121,12 @@ struct HomeView: View {
         .task {
             await savedToursVM.load()
         }
-        // "Build another tour →" from CompletionCardView navigates straight to the quiz
-        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
-            showQuiz = true
-        }
+        // Note: "Build another tour →" no longer needs a handler here —
+        // QuizView resets itself in place (see QuizView's .buildAnotherTour
+        // handler) without leaving HomeView's nav stack, so `showQuiz`
+        // never needs to change. ".backToHome" (the Results back chevron)
+        // is handled by QuizView's own dismiss(), which pops it off the
+        // stack and naturally reveals HomeView underneath.
     }
 }
 
@@ -135,15 +137,15 @@ struct SavedTourRow: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(tour.neighborhood)
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(size: 15, weight: .semibold)
                     .foregroundColor(.primary)
                 Text("\(tour.stops.count) stops · \(tour.vibe.first ?? "")")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundColor(.secondary)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.system(size: 12))
+                .scaledFont(size: 12)
                 .foregroundColor(.secondary)
         }
         .padding(.horizontal, 20)

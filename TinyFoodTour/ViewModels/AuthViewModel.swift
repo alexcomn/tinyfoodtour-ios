@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import AuthenticationServices
+import CryptoKit
 
 @MainActor
 final class AuthViewModel: ObservableObject {
@@ -84,6 +86,79 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Apple Sign In
+
+    private var currentNonce: String?
+    private var appleCoordinator: AppleSignInCoordinator?
+
+    func signInWithApple() async {
+        isLoading = true
+        errorMessage = nil
+        let nonce = randomNonce()
+        currentNonce = nonce
+
+        let coordinator = AppleSignInCoordinator()
+        appleCoordinator = coordinator
+
+        do {
+            let credential = try await withCheckedThrowingContinuation { cont in
+                coordinator.continuation = cont
+                let provider = ASAuthorizationAppleIDProvider()
+                let request = provider.createRequest()
+                request.requestedScopes = [.email]
+                request.nonce = sha256(nonce)
+
+                let controller = ASAuthorizationController(authorizationRequests: [request])
+                controller.delegate = coordinator
+                controller.presentationContextProvider = coordinator
+                controller.performRequests()
+            }
+
+            guard let tokenData = credential.identityToken,
+                  let idToken = String(data: tokenData, encoding: .utf8) else {
+                errorMessage = "Apple Sign In failed. Please try again."
+                isLoading = false
+                return
+            }
+            let response = try await supabase.signInWithIdToken(
+                provider: "apple", idToken: idToken, nonce: nonce
+            )
+            persist(response: response)
+        } catch {
+            if (error as? ASAuthorizationError)?.code == .canceled { /* user cancelled — no message */ }
+            else { errorMessage = friendlyAuthError(error) }
+        }
+        isLoading = false
+        appleCoordinator = nil
+    }
+
+    // MARK: - Nonce helpers (required by Apple + Supabase for security)
+
+    private func randomNonce(length: Int = 32) -> String {
+        let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var result = ""
+        var remaining = length
+        while remaining > 0 {
+            var random = [UInt8](repeating: 0, count: 16)
+            SecRandomCopyBytes(kSecRandomDefault, random.count, &random)
+            random.forEach { byte in
+                if remaining == 0 { return }
+                if byte < charset.count {
+                    result.append(charset[Int(byte)])
+                    remaining -= 1
+                }
+            }
+        }
+        return result
+    }
+
+    private func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8))
+            .compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - Error helpers
+
     private func friendlyAuthError(_ error: Error) -> String {
         if SupabaseService.isNetworkError(error) {
             return "No internet connection. Check your connection and try again."
@@ -96,5 +171,42 @@ final class AuthViewModel: ObservableObject {
             return "An account with that email already exists. Try signing in."
         }
         return error.localizedDescription
+    }
+}
+
+// MARK: - Apple Sign In coordinator
+// Bridges ASAuthorizationController delegate callbacks to async/await.
+private final class AppleSignInCoordinator: NSObject,
+    ASAuthorizationControllerDelegate,
+    ASAuthorizationControllerPresentationContextProviding {
+
+    var continuation: CheckedContinuation<ASAuthorizationAppleIDCredential, Error>?
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? UIWindow()
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithAuthorization authorization: ASAuthorization
+    ) {
+        guard let cred = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            continuation?.resume(throwing: ASAuthorizationError(.invalidResponse))
+            continuation = nil
+            return
+        }
+        continuation?.resume(returning: cred)
+        continuation = nil
+    }
+
+    func authorizationController(
+        controller: ASAuthorizationController,
+        didCompleteWithError error: Error
+    ) {
+        continuation?.resume(throwing: error)
+        continuation = nil
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import AuthenticationServices
 
 struct AuthView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -18,6 +19,36 @@ struct AuthView: View {
                     Text(isSignUp ? "Create an account" : "Welcome back")
                         .font(TFTFont.heading(24))
 
+                    // ── Social sign-in ────────────────────────────────────
+                    VStack(spacing: 12) {
+                        SignInWithAppleButton(
+                            isSignUp ? .signUp : .signIn,
+                            onRequest: { _ in },
+                            onCompletion: { _ in }
+                        )
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: 50)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .onTapGesture {
+                            Task {
+                                await authVM.signInWithApple()
+                                if authVM.currentUser != nil { dismiss() }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+
+                    // ── Divider ───────────────────────────────────────────
+                    HStack(spacing: 10) {
+                        Rectangle().fill(Color(.separator)).frame(height: 1)
+                        Text("or")
+                            .scaledFont(size: 12)
+                            .foregroundColor(Color("SlateMid"))
+                        Rectangle().fill(Color(.separator)).frame(height: 1)
+                    }
+                    .padding(.horizontal, 24)
+
+                    // ── Email / password ──────────────────────────────────
                     VStack(spacing: 14) {
                         TextField("Email", text: $email)
                             .keyboardType(.emailAddress)
@@ -37,7 +68,7 @@ struct AuthView: View {
 
                     if let error = authVM.errorMessage {
                         Text(error)
-                            .font(.system(size: 13))
+                            .scaledFont(size: 13)
                             .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 24)
@@ -66,10 +97,11 @@ struct AuthView: View {
                         authVM.errorMessage = nil
                     } label: {
                         Text(isSignUp ? "Already have an account? Sign in" : "New here? Create an account")
-                            .font(.system(size: 14))
+                            .scaledFont(size: 14)
                             .foregroundColor(Color("Radish"))
                     }
                 }
+                .padding(.bottom, 24)
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {

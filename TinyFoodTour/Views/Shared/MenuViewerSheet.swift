@@ -122,7 +122,7 @@ struct MenuViewerSheet: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .medium))
+                            .scaledFont(size: 13, weight: .medium)
                             .foregroundColor(Color("SlateMid"))
                     }
                 }
@@ -133,7 +133,7 @@ struct MenuViewerSheet: View {
                             if vm.allCollapsed { vm.expandAll() }
                             else { vm.collapseAll(count: data.sections.count) }
                         }
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(Color("SlateMid"))
                     }
                 }
@@ -148,7 +148,7 @@ struct MenuViewerSheet: View {
         VStack(spacing: 16) {
             ProgressView().tint(Color("Radish"))
             Text("Standby, we're loading a peek at the menu for you.")
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundColor(Color("SlateMid"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -159,14 +159,14 @@ struct MenuViewerSheet: View {
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 16) {
             Text(message)
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundColor(Color("SlateMid"))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             if let url = URL(string: url) {
                 Link(destination: url) {
                     Label("Open website", systemImage: "arrow.up.right.square")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundColor(Color("Primary"))
                 }
             }
@@ -179,7 +179,7 @@ struct MenuViewerSheet: View {
             LazyVStack(alignment: .leading, spacing: 20) {
                 if let note = data.note {
                     Text(note)
-                        .font(.system(size: 11))
+                        .scaledFont(size: 11)
                         .italic()
                         .foregroundColor(Color("SlateMid"))
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -200,7 +200,7 @@ struct MenuViewerSheet: View {
                     Divider()
                     Link(destination: url) {
                         Label("View full website", systemImage: "arrow.up.right.square")
-                            .font(.system(size: 11))
+                            .scaledFont(size: 11)
                             .foregroundColor(Color("SlateMid"))
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -227,7 +227,7 @@ private struct SectionBlock: View {
             Button(action: hasMultiple ? onToggle : {}) {
                 HStack {
                     Text(section.title.uppercased())
-                        .font(.system(size: 11, weight: .semibold))
+                        .scaledFont(size: 11, weight: .semibold)
                         .tracking(1.5)
                         .foregroundColor(Color("Primary"))
 
@@ -236,10 +236,10 @@ private struct SectionBlock: View {
                     if hasMultiple {
                         HStack(spacing: 4) {
                             Text("\(section.items.count)")
-                                .font(.system(size: 10))
+                                .scaledFont(size: 10)
                                 .foregroundColor(Color("SlateMid"))
                             Image(systemName: isCollapsed ? "chevron.down" : "chevron.up")
-                                .font(.system(size: 11))
+                                .scaledFont(size: 11)
                                 .foregroundColor(Color("SlateMid"))
                         }
                     }
@@ -268,11 +268,11 @@ private struct MenuItemRow: View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.name)
-                    .font(.system(size: 13, weight: .medium))
+                    .scaledFont(size: 13, weight: .medium)
                     .foregroundColor(Color("Foreground"))
                 if let desc = item.description, !desc.isEmpty {
                     Text(desc)
-                        .font(.system(size: 11))
+                        .scaledFont(size: 11)
                         .foregroundColor(Color("SlateMid"))
                         .lineSpacing(2)
                 }
@@ -281,7 +281,7 @@ private struct MenuItemRow: View {
 
             if let price = item.price, !price.isEmpty {
                 Text(price)
-                    .font(.system(size: 12, weight: .medium))
+                    .scaledFont(size: 12, weight: .medium)
                     .foregroundColor(Color("TFTSlate"))
                     .fixedSize()
             }

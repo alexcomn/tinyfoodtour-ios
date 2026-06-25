@@ -4,28 +4,34 @@ import PhotosUI
 
 struct LiveTourView: View {
     let tourId: String
-    /// Called with the set of completed stop indices when "Review your stops" is tapped.
-    var onReviewStops: ((Set<Int>) -> Void)? = nil
+    /// Called with completed stop indices + full progress array when "Look at my stops" is tapped.
+    var onReviewStops: ((Set<Int>, [StopProgress]) -> Void)? = nil
+    /// Called when the user wants to leave Live Tour without finishing
+    /// (currently only the load-error "← Go back" state). Nil = fall back
+    /// to environment dismiss (standalone/preview contexts).
+    var onBack: (() -> Void)? = nil
     @EnvironmentObject var authVM: AuthViewModel
     @StateObject private var vm = LiveTourViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var showAuth = false
 
     var body: some View {
         ZStack {
+            // ── Main content ───────────────────────────────────────────────
             if vm.isLoading {
                 loadingView
             } else if let error = vm.errorMessage, vm.tour == nil {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.circle")
-                        .font(.system(size: 36))
+                        .scaledFont(size: 36)
                         .foregroundColor(Color("SlateMid"))
                     Text(error)
-                        .font(.system(size: 15))
+                        .scaledFont(size: 15)
                         .foregroundColor(Color("SlateMid"))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                    Button("← Go back") { dismiss() }
-                        .font(.system(size: 14))
+                    Button("← Go back") { onBack?() ?? dismiss() }
+                        .scaledFont(size: 14)
                         .foregroundColor(Color("Primary"))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -33,32 +39,48 @@ struct LiveTourView: View {
             } else if let tour = vm.tour {
                 mainContent(tour: tour)
             }
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(false)
-        .darkStatusBar()
-        .sheet(isPresented: $vm.showCompletionCard) {
-            if let tour = vm.tour {
-                CompletionCardView(
+
+            // ── Full-screen completion overlay ────────────────────────────
+            // Shown inline (no sheet) to avoid the iOS 26 presentation
+            // coordinate transform that sheets and navigation destinations add.
+            if vm.showCompletionCard, let tour = vm.tour {
+                TourCompleteView(
                     tour: tour,
+                    progress: vm.progress,
                     onBuildAnother: {
-                        // Dismiss this view first, then cascade up to HomeView
-                        dismiss()
+                        // No dismiss() here — same reasoning as onLookAtStops
+                        // below. GeneratingView's own .buildAnotherTour
+                        // listener pops itself off the stack.
+                        vm.showCompletionCard = false
                         NotificationCenter.default.post(name: .buildAnotherTour, object: nil)
                     },
-                    onReviewStops: {
-                        // Collect completed indices, dismiss the sheet, then pass
-                        // them back to ResultsView via the onReviewStops closure.
-                        let completed = Set(vm.progress.indices.filter { vm.progress[$0].completed })
-                        dismiss()
-                        onReviewStops?(completed)
+                    onLookAtStops: { indices, progress in
+                        // No dismiss() here: LiveTourView is shown inline inside
+                        // ResultsView (no separate navigation/sheet context), so
+                        // @Environment(\.dismiss) actually pops the *parent*
+                        // GeneratingView off the nav stack — landing the user back
+                        // on the quiz. We just want ResultsView to swap back from
+                        // LiveTourView to its results content.
+                        vm.showCompletionCard = false
+                        onReviewStops?(indices, progress)
                     }
                 )
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(10)
             }
         }
-        // When "Build another tour" fires, this view also dismisses itself
-        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
-            dismiss()
+        .animation(.easeInOut(duration: 0.35), value: vm.showCompletionCard)
+        .navigationBarTitleDisplayMode(.inline)
+        // LiveTourView is rendered *inline* inside ResultsView/GeneratingView
+        // (no separate nav-stack entry of its own). A visible system back
+        // button here actually controls GeneratingView's nav-stack entry —
+        // tapping it pops GeneratingView and reveals QuizView exactly as the
+        // user left it (its last step), which reads as "back button dumps me
+        // at step 7 of the quiz". Hide it; use onBack/onReviewStops instead.
+        .navigationBarBackButtonHidden(true)
+        .darkStatusBar()
+        .sheet(isPresented: $showAuth) {
+            AuthView().environmentObject(authVM)
         }
         .task {
             await vm.load(tourId: tourId, userId: authVM.currentUser?.id)
@@ -97,7 +119,8 @@ struct LiveTourView: View {
                         onCheckOff: { Task { await vm.checkOff(userId: authVM.currentUser?.id) } },
                         onSaveNotes: { Task { await vm.saveNotes(userId: authVM.currentUser?.id) } },
                         onToggleFavorite: { Task { await vm.toggleFavorite(stop: stop, userId: authVM.currentUser?.id) } },
-                        onUploadPhoto: { data in Task { await vm.uploadPhoto(data: data, userId: authVM.currentUser?.id) } }
+                        onUploadPhoto: { data in Task { await vm.uploadPhoto(data: data, userId: authVM.currentUser?.id) } },
+                        onSignIn: { showAuth = true }
                     )
                 }
             }
@@ -139,7 +162,7 @@ struct LiveTourView: View {
                 vm.noteText = vm.progress[safe: vm.currentStopIndex]?.notes ?? ""
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .medium))
+                    .scaledFont(size: 16, weight: .medium)
                     .foregroundColor(vm.currentStopIndex > 0 ? .primary : .primary.opacity(0.2))
             }
             .disabled(vm.currentStopIndex == 0)
@@ -147,7 +170,7 @@ struct LiveTourView: View {
             Spacer()
 
             Text("\(vm.currentStopIndex + 1) of \(tour.stops.count)")
-                .font(.system(size: 13))
+                .scaledFont(size: 13)
                 .foregroundColor(.secondary)
 
             Spacer()
@@ -159,7 +182,7 @@ struct LiveTourView: View {
                     vm.noteText = vm.progress[safe: vm.currentStopIndex]?.notes ?? ""
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .medium))
+                        .scaledFont(size: 16, weight: .medium)
                         .foregroundColor(.primary)
                 }
             } else {
@@ -167,7 +190,7 @@ struct LiveTourView: View {
                     vm.showCompletionCard = true
                 } label: {
                     Text("Finish 🎉")
-                        .font(.system(size: 14, weight: .semibold))
+                        .scaledFont(size: 14, weight: .semibold)
                         .foregroundColor(Color("Radish"))
                 }
             }
@@ -203,6 +226,7 @@ struct StopDetailView: View {
     let onSaveNotes: () -> Void
     let onToggleFavorite: () -> Void
     let onUploadPhoto: (Data) -> Void
+    var onSignIn: (() -> Void)? = nil
 
     @State private var photoItem: PhotosPickerItem?
     @State private var showMenu = false
@@ -225,7 +249,7 @@ struct StopDetailView: View {
             // Stop header
             VStack(alignment: .leading, spacing: 6) {
                 Text(label)
-                    .font(.system(size: 11, weight: .bold))
+                    .scaledFont(size: 11, weight: .bold)
                     .foregroundColor(stopColor)
                     .kerning(1.2)
 
@@ -235,13 +259,13 @@ struct StopDetailView: View {
                             .font(TFTFont.heading(22))
                         Text([stop.cuisine_type, stop.price_level.map { String(repeating: "$", count: max(1, $0)) }]
                         .compactMap { $0 }.joined(separator: " · "))
-                            .font(.system(size: 14))
+                            .scaledFont(size: 14)
                             .foregroundColor(.secondary)
                     }
                     Spacer()
                     Button(action: onToggleFavorite) {
                         Image(systemName: isFavorite ? "heart.fill" : "heart")
-                            .font(.system(size: 20))
+                            .scaledFont(size: 20)
                             .foregroundColor(isFavorite ? Color("Radish") : .secondary)
                     }
                     .buttonStyle(.plain)
@@ -250,11 +274,13 @@ struct StopDetailView: View {
             .padding(.horizontal, 20)
             .padding(.top, 16)
 
-            // Route map — shows all stops, highlights current
+            // Route map — shows all stops, highlights current. Uses
+            // MiniMapView's default height (matches RouteSnapshotView's
+            // default used by ResultsView.mapSection) so the map is the same
+            // size and the route sits in the same place on both screens.
             MiniMapView(stop: stop, allStops: allStops, currentIndex: index,
                        completedIndices: completedIndices)
-                .frame(height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, 20)
 
             // Walk time + address
@@ -262,15 +288,15 @@ struct StopDetailView: View {
                 if let walkTime = stop.walk_time_from_previous, walkTime != "Starting point" {
                     HStack(spacing: 4) {
                         Image(systemName: "figure.walk")
-                            .font(.system(size: 12))
+                            .scaledFont(size: 12)
                         Text(walkTime)
-                            .font(.system(size: 13))
+                            .scaledFont(size: 13)
                     }
                     .foregroundColor(.secondary)
                 }
                 if let addr = stop.address {
                     Text(addr)
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.secondary)
                 }
             }
@@ -279,18 +305,17 @@ struct StopDetailView: View {
             // Description
             if let desc = stop.description {
                 Text(desc)
-                    .font(.system(size: 15))
+                    .scaledFont(size: 15)
                     .lineSpacing(4)
                     .padding(.horizontal, 20)
             }
 
             // Action links
             HStack(spacing: 16) {
-                if let mapsUrl = stop.google_maps_url ?? makeGoogleMapsURL(for: stop),
-                   let url = URL(string: mapsUrl) {
+                if let url = directionsURL(for: stop) {
                     Link(destination: url) {
                         Label("Directions", systemImage: "map.fill")
-                            .font(.system(size: 13, weight: .medium))
+                            .scaledFont(size: 13, weight: .medium)
                             .foregroundColor(Color("Radish"))
                     }
                 }
@@ -298,7 +323,7 @@ struct StopDetailView: View {
                     showMenu = true
                 } label: {
                     Label("Menu", systemImage: "menucard")
-                        .font(.system(size: 13, weight: .medium))
+                        .scaledFont(size: 13, weight: .medium)
                         .foregroundColor(Color("Radish"))
                 }
                 .buttonStyle(.plain)
@@ -315,10 +340,10 @@ struct StopDetailView: View {
             Button(action: onCheckOff) {
                 HStack(spacing: 8) {
                     Image(systemName: progress.completed ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20))
+                        .scaledFont(size: 20)
                         .foregroundColor(progress.completed ? .green : .secondary)
                     Text(progress.completed ? "Stop checked off! 🎉" : "Mark this stop as visited")
-                        .font(.system(size: 15, weight: .medium))
+                        .scaledFont(size: 15, weight: .medium)
                         .foregroundColor(progress.completed ? .green : .primary)
                 }
             }
@@ -329,12 +354,12 @@ struct StopDetailView: View {
             // ── Notes ────────────────────────────────────────────────────────
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
-                    .font(.system(size: 13, weight: .semibold))
+                    .scaledFont(size: 13, weight: .semibold)
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 20)
 
                 TextEditor(text: $noteText)
-                    .font(.system(size: 14))
+                    .scaledFont(size: 14)
                     .frame(minHeight: 80)
                     .padding(10)
                     .background(Color(.secondarySystemBackground))
@@ -360,13 +385,13 @@ struct StopDetailView: View {
                         HStack(spacing: 4) {
                             if noteSaved {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 12))
+                                    .scaledFont(size: 12)
                                 Text("Saved!")
                             } else {
                                 Text(isSaving ? "Saving…" : "Save notes")
                             }
                         }
-                        .font(.system(size: 13, weight: .medium))
+                        .scaledFont(size: 13, weight: .medium)
                         .foregroundColor(noteSaved ? .green : Color("Radish"))
                     }
                     .disabled(isSaving)
@@ -378,13 +403,13 @@ struct StopDetailView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text("Photos")
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(size: 13, weight: .semibold)
                         .foregroundColor(.secondary)
                     Spacer()
                     if isSignedIn {
                         PhotosPicker(selection: $photoItem, matching: .images) {
                             Label("Add photo", systemImage: "camera")
-                                .font(.system(size: 13))
+                                .scaledFont(size: 13)
                                 .foregroundColor(Color("Radish"))
                         }
                         .onChange(of: photoItem) { _, item in
@@ -401,9 +426,14 @@ struct StopDetailView: View {
                             }
                         }
                     } else {
-                        Text("Sign in to add photos")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color("SlateMid"))
+                        Button {
+                            onSignIn?()
+                        } label: {
+                            Label("Sign in to add photos", systemImage: "person.circle")
+                                .scaledFont(size: 12)
+                                .foregroundColor(Color("Radish"))
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -412,7 +442,7 @@ struct StopDetailView: View {
                     HStack(spacing: 6) {
                         ProgressView().scaleEffect(0.8)
                         Text("Uploading photo…")
-                            .font(.system(size: 12))
+                            .scaledFont(size: 12)
                             .foregroundColor(Color("SlateMid"))
                     }
                     .padding(.horizontal, 20)
@@ -441,10 +471,18 @@ struct StopDetailView: View {
         }
     }
 
-    private func makeGoogleMapsURL(for stop: TourStop) -> String? {
+    // Prefer coordinate-based Apple Maps — always works on iOS, no "No results
+    // found" since we pass exact lat/lng. Falls back to the DB's google_maps_url
+    // then an address search if coordinates aren't available.
+    private func directionsURL(for stop: TourStop) -> URL? {
+        if let lat = stop.lat, let lng = stop.lng {
+            let name = stop.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            return URL(string: "maps://?ll=\(lat),\(lng)&q=\(name)")
+        }
+        if let gmUrl = stop.google_maps_url { return URL(string: gmUrl) }
         let q = (stop.name + " " + (stop.address ?? ""))
             .addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return "https://maps.google.com/?q=\(q)"
+        return URL(string: "https://maps.apple.com/?q=\(q)")
     }
 }
 
@@ -465,7 +503,7 @@ struct CompletionCardView: View {
                 .font(TFTFont.heading(26))
                 .multilineTextAlignment(.center)
             Text("Every stop in \(tour.neighborhood), on foot.")
-                .font(.system(size: 15))
+                .scaledFont(size: 15)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -475,7 +513,7 @@ struct CompletionCardView: View {
                 onBuildAnother?()
             } label: {
                 Text("Build another tour →")
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(size: 15, weight: .semibold)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -490,7 +528,7 @@ struct CompletionCardView: View {
                 dismiss()
                 onReviewStops?()
             }
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundColor(Color("SlateMid"))
             Spacer()
         }

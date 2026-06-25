@@ -19,9 +19,13 @@ struct ResultsView: View {
     @StateObject private var tweakVM = TourViewModel()
     @State private var showLiveTour = false
     @State private var completedStopIndices: Set<Int> = []   // populated when user reviews after completing
+    @State private var tourProgress: [StopProgress]? = nil  // user photos/notes per stop, set after completing
     @State private var isSaved = false
     @State private var currentTour: Tour
     @State private var shufflingIndex: Int? = nil
+    @State private var smartShufflingIndex: Int? = nil
+    @State private var smartShuffleErrorIndex: Int? = nil
+    @State private var smartShuffleError: String? = nil
     @State private var showTweaks = false
     @State private var tweakStops: Double
     @State private var tweakPrice: Double
@@ -56,10 +60,21 @@ struct ResultsView: View {
         // LiveTourView shown inline — same reason as GeneratingView→ResultsView:
         // any iOS 26 presentation adds a coordinate transform. Inline swap has none.
         if showLiveTour {
-            LiveTourView(tourId: currentTour.id, onReviewStops: { indices in
-                completedStopIndices = indices
-                showLiveTour = false
-            })
+            LiveTourView(
+                tourId: currentTour.id,
+                onReviewStops: { indices, progress in
+                    completedStopIndices = indices
+                    tourProgress = progress
+                    showLiveTour = false
+                },
+                onBack: {
+                    // Leave Live Tour without finishing — swap back to the
+                    // results content. Must NOT use dismiss(): LiveTourView
+                    // is inline here, so dismiss() resolves to the parent
+                    // GeneratingView's dismiss and pops the whole flow.
+                    showLiveTour = false
+                }
+            )
             .environmentObject(authVM)
         } else {
             resultsContent
@@ -84,6 +99,14 @@ struct ResultsView: View {
                     } else {
                         VStack(spacing: 12) {
                             ForEach(Array(stops.enumerated()), id: \.element.place_id) { idx, stop in
+                                // Disable shuffle controls on shared tours and in review mode
+                                let inReviewMode = tourProgress != nil
+                                let shuffleAction: (() -> Void)? = (isShared || inReviewMode) ? nil : {
+                                    Task { await shuffleStop(at: idx) }
+                                }
+                                let smartShuffleAction: ((String) -> Void)? = (isShared || inReviewMode) ? nil : { instructions in
+                                    Task { await smartShuffleStop(at: idx, instructions: instructions) }
+                                }
                                 StopCard(
                                     stop: stop,
                                     tourId: currentTour.id,
@@ -93,9 +116,13 @@ struct ResultsView: View {
                                     vibes: currentTour.vibe,
                                     isFirst: idx == 0,
                                     isCompleted: completedStopIndices.contains(idx),
+                                    progress: tourProgress?[safe: idx],
                                     isShuffling: shufflingIndex == idx,
+                                    isSmartShuffling: smartShufflingIndex == idx,
+                                    smartShuffleError: smartShuffleErrorIndex == idx ? smartShuffleError : nil,
                                     onStartHere: { showLiveTour = true },
-                                    onShuffle: isShared ? nil : { Task { await shuffleStop(at: idx) } }
+                                    onShuffle: shuffleAction,
+                                    onSmartShuffle: smartShuffleAction
                                 )
                             }
                         }
@@ -113,13 +140,11 @@ struct ResultsView: View {
             .overlay(alignment: .top) { navRow }
         }
         .ignoresSafeArea(edges: .bottom)
+        .navigationBarBackButtonHidden(true)
         .darkStatusBar()
         .sheet(isPresented: $showTweaks) { tweaksSheet }
         .onChange(of: tweakVM.tour) { _, newTour in
             if let t = newTour { currentTour = t; showTweaks = false }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .buildAnotherTour)) { _ in
-            if let back = onBack { back() } else { dismiss() }
         }
     }
 
@@ -129,7 +154,7 @@ struct ResultsView: View {
                 if let back = onBack { back() } else { dismiss() }
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(size: 17, weight: .semibold)
                     .foregroundColor(Color("TFTSlate"))
                     .frame(width: 38, height: 38)
                     .background(Color("Cream"))
@@ -140,7 +165,7 @@ struct ResultsView: View {
             if !isShared {
                 Button { showTweaks = true } label: {
                     Image(systemName: "slider.horizontal.3")
-                        .font(.system(size: 15))
+                        .scaledFont(size: 15)
                         .foregroundColor(Color("TFTSlate"))
                         .frame(width: 38, height: 38)
                         .background(Color("Cream"))
@@ -168,7 +193,7 @@ struct ResultsView: View {
 
             // Plain dot-separated line — matches web "3 stops · ~0.4 mi · ~10 min walking"
             Text(tourMetaLine)
-                .font(.system(size: 13))
+                .scaledFont(size: 13)
                 .foregroundColor(Color("SlateMid"))
 
             // Completion summary — only shown when returning from Live Tour
@@ -176,12 +201,12 @@ struct ResultsView: View {
                 HStack(spacing: 6) {
                     Image(systemName: completedStopIndices.count == stops.count
                           ? "checkmark.circle.fill" : "checkmark.circle")
-                        .font(.system(size: 13))
+                        .scaledFont(size: 13)
                         .foregroundColor(.green)
                     Text(completedStopIndices.count == stops.count
                          ? "All \(stops.count) stops visited"
                          : "\(completedStopIndices.count) of \(stops.count) stops visited")
-                        .font(.system(size: 13, weight: .medium))
+                        .scaledFont(size: 13, weight: .medium)
                         .foregroundColor(.green)
                 }
                 .padding(.top, 8)
@@ -201,10 +226,10 @@ struct ResultsView: View {
             if currentTour.relaxations.contains("allowed_visited") {
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle")
-                        .font(.system(size: 12))
+                        .scaledFont(size: 12)
                         .foregroundColor(Color("TFTOrange"))
                     Text("We stretched a bit — one of these is from a previous tour. Slim pickings in this corner of the map.")
-                        .font(.system(size: 12))
+                        .scaledFont(size: 12)
                         .foregroundColor(Color("SlateMid"))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -213,7 +238,9 @@ struct ResultsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            RouteSnapshotView(stops: stops)
+            // Pass completedIndices so the post-tour review map matches the
+            // Live Tour map exactly (same green ✓ markers, same framing/size).
+            RouteSnapshotView(stops: stops, completedIndices: completedStopIndices)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, 20)
                 .padding(.vertical, 16)
@@ -250,6 +277,46 @@ struct ResultsView: View {
         shufflingIndex = nil
     }
 
+    // MARK: - Smart shuffle (natural-language replacement request)
+    // Mirrors handleSmartShuffle in web's Results.tsx — calls the smart-shuffle
+    // edge function with { tour_id, stop_index, instructions } and expects
+    // either { stop: <TourStop> } or { error: string } back. Unlike the web app,
+    // the iOS tour is always persisted at generation time (generate-tour inserts
+    // the row server-side and returns a real id), so there's no "save first" step.
+    private func smartShuffleStop(at index: Int, instructions: String) async {
+        guard smartShufflingIndex == nil else { return }
+        smartShufflingIndex = index
+        smartShuffleErrorIndex = nil
+        smartShuffleError = nil
+        struct SmartShuffleResponse: Codable { let stop: TourStop?; let error: String? }
+        do {
+            let result: SmartShuffleResponse = try await SupabaseService.shared.invokeFunction(
+                name: "smart-shuffle",
+                body: ["tour_id": currentTour.id, "stop_index": index, "instructions": instructions]
+            )
+            if let newStop = result.stop {
+                var newStops = currentTour.stops
+                newStops[index] = newStop
+                currentTour = Tour(
+                    id: currentTour.id, neighborhood: currentTour.neighborhood,
+                    vibe: currentTour.vibe, dietary: currentTour.dietary,
+                    walk_distance: currentTour.walk_distance, stops: newStops,
+                    created_at: currentTour.created_at, user_id: currentTour.user_id,
+                    share_token: currentTour.share_token,
+                    tourTitle: currentTour.tourTitle,
+                    totalDistanceMiles: currentTour.totalDistanceMiles
+                )
+            } else if let message = result.error {
+                smartShuffleErrorIndex = index
+                smartShuffleError = message
+            }
+        } catch {
+            smartShuffleErrorIndex = index
+            smartShuffleError = "Couldn't find a match — try a different request."
+        }
+        smartShufflingIndex = nil
+    }
+
     // MARK: - Tweaks sheet
     private var tweaksSheet: some View {
         NavigationStack {
@@ -258,19 +325,19 @@ struct ResultsView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Stops")
-                            .font(.system(size: 14, weight: .medium))
+                            .scaledFont(size: 14, weight: .medium)
                             .foregroundColor(Color("Foreground"))
                         Spacer()
                         Text("\(Int(tweakStops))")
-                            .font(.system(size: 14, weight: .semibold))
+                            .scaledFont(size: 14, weight: .semibold)
                             .foregroundColor(Color("Primary"))
                     }
                     Slider(value: $tweakStops, in: 2...5, step: 1)
                         .tint(Color("Primary"))
                     HStack {
-                        Text("2").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Text("2").scaledFont(size: 11).foregroundColor(Color("SlateMid"))
                         Spacer()
-                        Text("5").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Text("5").scaledFont(size: 11).foregroundColor(Color("SlateMid"))
                     }
                 }
 
@@ -278,19 +345,19 @@ struct ResultsView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("Pricing")
-                            .font(.system(size: 14, weight: .medium))
+                            .scaledFont(size: 14, weight: .medium)
                             .foregroundColor(Color("Foreground"))
                         Spacer()
                         Text(String(repeating: "$", count: Int(tweakPrice)))
-                            .font(.system(size: 14, weight: .semibold))
+                            .scaledFont(size: 14, weight: .semibold)
                             .foregroundColor(Color("Primary"))
                     }
                     Slider(value: $tweakPrice, in: 1...4, step: 1)
                         .tint(Color("Primary"))
                     HStack {
-                        Text("$").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Text("$").scaledFont(size: 11).foregroundColor(Color("SlateMid"))
                         Spacer()
-                        Text("$$$$").font(.system(size: 11)).foregroundColor(Color("SlateMid"))
+                        Text("$$$$").scaledFont(size: 11).foregroundColor(Color("SlateMid"))
                     }
                 }
 
@@ -301,7 +368,7 @@ struct ResultsView: View {
                     HStack(spacing: 10) {
                         ProgressView().tint(Color("Radish"))
                         Text(tweakVM.generatingMessage)
-                            .font(.system(size: 13))
+                            .scaledFont(size: 13)
                             .foregroundColor(Color("Radish"))
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -311,7 +378,7 @@ struct ResultsView: View {
                         params.walkDistance = params.walkDistance.isEmpty
                             ? "A short stroll (10 min)" : params.walkDistance
                         Task {
-                            var tweakedParams = params
+                            let tweakedParams = params
                             // Inject tweaked values — TourViewModel.generate() reads them
                             await tweakVM.generateWithTweaks(
                                 answers: tweakedParams,
@@ -339,13 +406,13 @@ struct ResultsView: View {
     private var emptyStopsView: some View {
         VStack(spacing: 12) {
             Image(systemName: "fork.knife.circle")
-                .font(.system(size: 40))
+                .scaledFont(size: 40)
                 .foregroundColor(Color("SlateMid"))
             Text("We couldn't find stops for this tour.")
-                .font(.system(size: 15, weight: .medium))
+                .scaledFont(size: 15, weight: .medium)
                 .foregroundColor(Color("TFTSlate"))
             Text("Try a different neighborhood or adjust your preferences.")
-                .font(.system(size: 13))
+                .scaledFont(size: 13)
                 .foregroundColor(Color("SlateMid"))
                 .multilineTextAlignment(.center)
         }
@@ -357,18 +424,21 @@ struct ResultsView: View {
     private var actionBar: some View {
         VStack(spacing: 12) {
             if !isShared {
-                Button {
-                    showLiveTour = true
-                } label: {
-                    Text("Start my tour →")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color("Primary"))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                // "Start my tour" hidden once the user has completed the tour
+                if tourProgress == nil {
+                    Button {
+                        showLiveTour = true
+                    } label: {
+                        Text("Start my tour →")
+                        .scaledFont(size: 15, weight: .semibold)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color("Primary"))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
 
                 // Share + Save row
                 HStack(spacing: 16) {
@@ -381,7 +451,7 @@ struct ResultsView: View {
                     } label: {
                         Label(isSaved ? "Saved!" : "Save tour",
                               systemImage: isSaved ? "bookmark.fill" : "bookmark")
-                            .font(.system(size: 14))
+                            .scaledFont(size: 14)
                             .foregroundColor(isSaved ? Color("Radish") : Color("SlateMid"))
                     }
 
@@ -395,7 +465,7 @@ struct ResultsView: View {
                             message: Text("Check out this food tour I built on Tiny Food Tour!")
                         ) {
                             Label("Share", systemImage: "square.and.arrow.up")
-                                .font(.system(size: 14))
+                                .scaledFont(size: 14)
                                 .foregroundColor(Color("SlateMid"))
                         }
                     }
@@ -410,6 +480,9 @@ struct ResultsView: View {
 // MARK: - Stop card
 struct StopCard: View {
     @State private var showMenu = false
+    @State private var showSmartShuffle = false
+    @State private var smartShuffleText = ""
+    @State private var isNameExpanded = false
     let stop: TourStop
     let tourId: String           // for menu_items DB lookup
     let index: Int
@@ -418,9 +491,13 @@ struct StopCard: View {
     let vibes: [String]
     let isFirst: Bool
     let isCompleted: Bool        // true when returning from Live Tour with this stop visited
+    var progress: StopProgress? = nil  // user photos + notes from Live Tour; nil before tour is taken
     let isShuffling: Bool
+    let isSmartShuffling: Bool
+    let smartShuffleError: String?
     let onStartHere: () -> Void
     let onShuffle: (() -> Void)?
+    let onSmartShuffle: ((String) -> Void)?
 
     private var stopColor: Color { StopLabel.color(index: index) }
     private var stopLabel: String { StopLabel.label(index: index, total: total, mealType: mealType, vibes: vibes) }
@@ -465,80 +542,102 @@ struct StopCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // ── Row 1: badge · label+name · walk/start ──────────────────────
-            HStack(alignment: .top, spacing: 12) {
+            // ── Row 1: badge · label · walk time · actions ──────────────────
+            HStack(alignment: .center, spacing: 8) {
                 // Badge: green ✓ if visited, brand colour + number otherwise
                 ZStack {
                     Circle().fill(isCompleted ? Color(hex: "#22c55e") : stopColor)
                     if isCompleted {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 12, weight: .bold))
+                            .scaledFont(size: 12, weight: .bold)
                             .foregroundColor(.white)
                     } else {
                         Text(String(format: "%02d", index + 1))
-                            .font(.system(size: 11, weight: .semibold))
+                            .scaledFont(size: 11, weight: .semibold)
                             .foregroundColor(.white)
                     }
                 }
                 .frame(width: 30, height: 30)
-                .flexibleShrink()
 
-                // Label + name
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(stopLabel)
-                        .font(.system(size: 10, weight: .medium))
-                        .kerning(1.5)
-                        .foregroundColor(stopColor)
+                Text(stopLabel)
+                    .scaledFont(size: 10, weight: .medium)
+                    .kerning(1.5)
+                    .foregroundColor(stopColor)
 
-                    Text(stop.name)
-                        .font(TFTFont.heading(17))
-                        .foregroundColor(Color("TFTSlate"))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Spacer()
 
-                // Shuffle + walk time / start here
-                HStack(spacing: 8) {
-                    // Shuffle button (hidden on shared tours)
-                    if let shuffle = onShuffle {
-                        Button(action: shuffle) {
-                            Image(systemName: isShuffling ? "arrow.2.circlepath" : "arrow.2.circlepath")
-                                .font(.system(size: 13))
-                                .foregroundColor(Color("SlateMid"))
-                                .rotationEffect(isShuffling ? .degrees(360) : .degrees(0))
-                                .animation(isShuffling ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: isShuffling)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(isShuffling)
-                    }
-
-                    if isFirst {
-                        Button(action: onStartHere) {
-                            HStack(spacing: 3) {
-                                Image(systemName: "mappin")
-                                    .font(.system(size: 9))
-                                Text("Start here")
-                                    .font(.system(size: 10, weight: .medium))
-                            }
-                            .foregroundColor(Color("Radish"))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color("Radish").opacity(0.35), lineWidth: 1)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    } else if let walk = stop.walk_time_from_previous, walk != "Starting point", !walk.isEmpty {
+                // Walk time for non-first stops
+                if !isFirst, let walk = stop.walk_time_from_previous, walk != "Starting point", !walk.isEmpty {
+                    HStack(spacing: 2) {
+                        Image(systemName: "figure.walk")
+                            .scaledFont(size: 10)
                         Text(walk)
-                            .font(.system(size: 11))
-                            .foregroundColor(Color("SlateMid"))
-                            .fixedSize()
+                            .scaledFont(size: 11)
                     }
+                    .foregroundColor(Color("SlateMid"))
+                }
+
+                // Shuffle button (hidden on shared tours)
+                if let shuffle = onShuffle {
+                    Button(action: shuffle) {
+                        Image(systemName: "arrow.2.circlepath")
+                            .scaledFont(size: 13)
+                            .foregroundColor(Color("SlateMid"))
+                            .rotationEffect(isShuffling ? .degrees(360) : .degrees(0))
+                            .animation(isShuffling ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: isShuffling)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isShuffling)
+                }
+
+                // Smart shuffle — natural-language replacement request (hidden on shared tours)
+                if let smartShuffle = onSmartShuffle {
+                    Button {
+                        showSmartShuffle = true
+                    } label: {
+                        Image(systemName: isSmartShuffling ? "ellipsis.message.fill" : "message")
+                            .scaledFont(size: 13)
+                            .foregroundColor(Color("SlateMid"))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSmartShuffling)
+                    .accessibilityLabel("Request a specific replacement")
+                    .popover(isPresented: $showSmartShuffle) {
+                        smartShufflePopover(onSubmit: smartShuffle)
+                    }
+                }
+
+                if isFirst {
+                    Button(action: onStartHere) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "mappin")
+                                .scaledFont(size: 9)
+                            Text("Start here")
+                                .scaledFont(size: 10, weight: .medium)
+                        }
+                        .foregroundColor(Color("Radish"))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color("Radish").opacity(0.35), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
+
+            // ── Row 2: restaurant name (full-width, 2-line clamp, tap to expand) ──
+            Text(stop.name)
+                .font(TFTFont.heading(17))
+                .foregroundColor(Color("TFTSlate"))
+                .lineLimit(isNameExpanded ? nil : 2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .onTapGesture { isNameExpanded.toggle() }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
 
             // ── Row 2: cuisine · price · hours ──────────────────────────────
             HStack(spacing: 0) {
@@ -555,14 +654,14 @@ struct StopCard: View {
                 if let hours = todaysHours {
                     HStack(spacing: 3) {
                         Image(systemName: "clock")
-                            .font(.system(size: 9))
+                            .scaledFont(size: 9)
                         Text(hours)
                             .foregroundColor(hours.hasPrefix("Closed") ? Color.red : Color("SlateMid").opacity(0.8))
                             .fontWeight(hours.hasPrefix("Closed") ? .semibold : .regular)
                     }
                 }
             }
-            .font(.system(size: 12))
+            .scaledFont(size: 12)
             .padding(.horizontal, 16)
             .padding(.top, 8)
 
@@ -594,6 +693,35 @@ struct StopCard: View {
                 .padding(.top, 10)
             }
 
+            // ── User photos from Live Tour ────────────────────────────────
+            if let userPhotos = progress?.photos, !userPhotos.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("YOUR PHOTOS")
+                        .scaledFont(size: 9, weight: .semibold)
+                        .foregroundColor(Color("SlateMid"))
+                        .tracking(1.5)
+                        .padding(.horizontal, 16)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(userPhotos, id: \.self) { url in
+                                AsyncImage(url: URL(string: url)) { phase in
+                                    switch phase {
+                                    case .success(let img): img.resizable().scaledToFill()
+                                    case .failure:          Color("CreamDark")
+                                    default:                Color("CreamDark").overlay(ProgressView().tint(Color("SlateMid")))
+                                    }
+                                }
+                                .frame(width: 100, height: 100)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                    }
+                }
+                .padding(.top, 8)
+            }
+
             // ── Divider + description + link button ──────────────────────────
             Divider()
                 .padding(.horizontal, 16)
@@ -603,11 +731,31 @@ struct StopCard: View {
             VStack(alignment: .leading, spacing: 10) {
                 if let desc = stop.description, !desc.isEmpty {
                     Text(desc)
-                        .font(.system(size: 12))
+                        .scaledFont(size: 12)
                         .foregroundColor(Color("SlateMid"))
                         .lineSpacing(3)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+
+                // ── User notes from Live Tour ─────────────────────────────
+                if let notes = progress?.notes,
+                   !notes.trimmingCharacters(in: .whitespaces).isEmpty {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "note.text")
+                            .scaledFont(size: 12)
+                            .foregroundColor(Color("SlateMid"))
+                            .padding(.top, 1)
+                        Text(notes)
+                            .scaledFont(size: 12)
+                            .foregroundColor(Color("TFTSlate"))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color("CreamDark"))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+
                 linkButton(for: stop)
             }
             .padding(.horizontal, 16)
@@ -625,6 +773,64 @@ struct StopCard: View {
         .sheet(isPresented: $showMenu) {
             MenuViewerSheet(url: menuURLString, restaurantName: stop.name,
                            tourId: tourId, stopIndex: index)
+        }
+    }
+
+    // Chat-bubble popover for natural-language replacement requests — mirrors
+    // web's Results.tsx (~lines 840-900): a short text field + "Go" button that
+    // calls smart-shuffle with free-form instructions ("something cheaper",
+    // "has outdoor seating"). Closes itself on submit; ResultsView owns the
+    // network call and loading/error state (passed back down as props).
+    @ViewBuilder
+    private func smartShufflePopover(onSubmit: @escaping (String) -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Request a specific replacement")
+                .scaledFont(size: 13, weight: .semibold)
+                .foregroundColor(Color("TFTSlate"))
+            Text("e.g. \u{201C}something cheaper\u{201D} or \u{201C}has outdoor seating\u{201D}")
+                .scaledFont(size: 11)
+                .foregroundColor(Color("SlateMid"))
+
+            HStack(spacing: 8) {
+                TextField("Type your request…", text: $smartShuffleText)
+                    .scaledFont(size: 13)
+                    .textFieldStyle(.roundedBorder)
+                    .disabled(isSmartShuffling)
+                    .submitLabel(.go)
+                    .onSubmit(submitSmartShuffle(onSubmit))
+
+                Button("Go") { submitSmartShuffle(onSubmit)() }
+                    .scaledFont(size: 13, weight: .semibold)
+                    .foregroundColor(Color("Primary"))
+                    .disabled(isSmartShuffling || smartShuffleText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            if isSmartShuffling {
+                HStack(spacing: 6) {
+                    ProgressView().tint(Color("SlateMid")).scaleEffect(0.7)
+                    Text("Looking for a match…")
+                        .scaledFont(size: 11)
+                        .foregroundColor(Color("SlateMid"))
+                }
+            } else if let error = smartShuffleError {
+                Text(error)
+                    .scaledFont(size: 11)
+                    .foregroundColor(.red)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .frame(width: 280)
+        .presentationCompactAdaptation(.popover)
+    }
+
+    private func submitSmartShuffle(_ onSubmit: @escaping (String) -> Void) -> () -> Void {
+        {
+            let trimmed = smartShuffleText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty, !isSmartShuffling else { return }
+            onSubmit(trimmed)
+            showSmartShuffle = false
+            smartShuffleText = ""
         }
     }
 
@@ -646,9 +852,16 @@ struct StopCard: View {
             if let w = stop.website_url, !w.isEmpty, w != "https://example.com" { return URL(string: w) }
             return nil
         }()
-        // Directions: prefer google_maps_url, fall back to search by name+address
-        let mapsURL: URL = stop.google_maps_url.flatMap(URL.init)
-            ?? URL(string: "https://maps.google.com/?q=\((stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")")!
+        // Prefer coordinate-based Apple Maps: always works on iOS, no "No results found"
+        let mapsURL: URL = {
+            if let lat = stop.lat, let lng = stop.lng {
+                let name = stop.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+                return URL(string: "maps://?ll=\(lat),\(lng)&q=\(name)") ?? URL(string: "https://maps.apple.com/")!
+            }
+            if let gm = stop.google_maps_url.flatMap(URL.init) { return gm }
+            let q = (stop.name + " " + (stop.address ?? "")).addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+            return URL(string: "https://maps.apple.com/?q=\(q)") ?? URL(string: "https://maps.apple.com/")!
+        }()
 
         HStack(spacing: 8) {
             // "View menu →" always visible — opens in-app MenuViewerSheet
@@ -668,7 +881,7 @@ struct StopCard: View {
 
     private func outlineLinkLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .scaledFont(size: 11)
             .foregroundColor(Color("TFTSlate"))
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -685,7 +898,7 @@ struct MetaChip: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.system(size: 11))
+            .scaledFont(size: 11)
             .foregroundColor(Color("SlateMid"))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
