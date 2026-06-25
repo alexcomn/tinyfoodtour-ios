@@ -136,16 +136,14 @@ final class SupabaseService {
     // MARK: - Auth
     /// Exchange an Apple/Google identity token for a Supabase session.
     /// `nonce` is the raw (unhashed) nonce — Supabase SHA-256 hashes it and
-    /// compares to what Apple embedded in the JWT.
-    func signInWithIdToken(provider: String, idToken: String, nonce: String) async throws -> AuthResponse {
+    /// compares to what Apple embedded in the JWT. Nil for providers that don't require it.
+    func signInWithIdToken(provider: String, idToken: String, nonce: String? = nil) async throws -> AuthResponse {
         var request = URLRequest(url: URL(string: "\(supabaseURL)/auth/v1/token?grant_type=id_token")!)
         request.httpMethod = "POST"
         baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
-        request.httpBody = try JSONEncoder().encode([
-            "provider": provider,
-            "id_token": idToken,
-            "nonce": nonce
-        ])
+        var body = ["provider": provider, "id_token": idToken]
+        if let n = nonce { body["nonce"] = n }
+        request.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await URLSession.shared.data(for: request)
         try validateResponse(response, data: data)
         return try JSONDecoder().decode(AuthResponse.self, from: data)
@@ -183,6 +181,17 @@ final class SupabaseService {
             tourTitle: row.tour_title,
             totalDistanceMiles: row.total_distance_miles
         )
+    }
+
+    /// Fetch the currently authenticated user from Supabase.
+    /// Call after setting the auth token (e.g. post-OAuth callback).
+    func getUser() async throws -> AuthUser {
+        var request = URLRequest(url: URL(string: "\(supabaseURL)/auth/v1/user")!)
+        request.httpMethod = "GET"
+        baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateResponse(response, data: data)
+        return try JSONDecoder().decode(AuthUser.self, from: data)
     }
 
     func signUp(email: String, password: String) async throws -> AuthResponse {

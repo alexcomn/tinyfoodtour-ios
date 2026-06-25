@@ -86,6 +86,81 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Google Sign In
+    // Uses ASWebAuthenticationSession to drive Supabase's built-in Google OAuth
+    // redirect flow. No Google SDK or client-ID config required on the iOS side —
+    // Supabase owns the OAuth dance and redirects back via the tinyfoodtour:// scheme.
+    // Tokens arrive in the URL fragment (#access_token=...&refresh_token=...) which
+    // ASWebAuthenticationSession captures in full (unlike onOpenURL, which strips fragments).
+
+    private var webAuthSession: ASWebAuthenticationSession?
+    private var webAuthContext: WebAuthPresentationContext?
+
+    func signInWithGoogle() async {
+        isLoading = true
+        errorMessage = nil
+
+        let redirectURI = "tinyfoodtour://auth/callback"
+        guard let encoded = redirectURI.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let authURL = URL(string: "\(TFTConfig.supabaseURL)/auth/v1/authorize?provider=google&redirect_to=\(encoded)") else {
+            errorMessage = "Invalid auth configuration."
+            isLoading = false
+            return
+        }
+
+        do {
+            let callbackURL: URL = try await withCheckedThrowingContinuation { cont in
+                let ctx = WebAuthPresentationContext()
+                let session = ASWebAuthenticationSession(
+                    url: authURL,
+                    callbackURLScheme: "tinyfoodtour"
+                ) { url, error in
+                    if let error { cont.resume(throwing: error); return }
+                    guard let url else { cont.resume(throwing: OAuthError.missingCallback); return }
+                    cont.resume(returning: url)
+                }
+                session.presentationContextProvider = ctx
+                session.prefersEphemeralWebBrowserSession = false
+                webAuthSession = session
+                webAuthContext = ctx
+                session.start()
+            }
+
+            // Supabase returns tokens in the URL fragment:
+            // tinyfoodtour://auth/callback#access_token=...&refresh_token=...
+            let params = fragmentParams(from: callbackURL)
+            guard let accessToken = params["access_token"] else {
+                throw OAuthError.missingToken
+            }
+            supabase.setAuthToken(accessToken)
+            let user = try await supabase.getUser()
+            persist(response: AuthResponse(
+                access_token: accessToken,
+                refresh_token: params["refresh_token"],
+                user: user
+            ))
+        } catch {
+            let nsErr = error as NSError
+            let cancelled = nsErr.domain == ASWebAuthenticationSessionErrorDomain
+                && nsErr.code == ASWebAuthenticationSessionError.canceledLogin.rawValue
+            if !cancelled { errorMessage = friendlyAuthError(error) }
+        }
+
+        isLoading = false
+        webAuthSession = nil
+        webAuthContext = nil
+    }
+
+    private func fragmentParams(from url: URL) -> [String: String] {
+        var components = URLComponents()
+        components.query = url.fragment ?? ""
+        return Dictionary(
+            uniqueKeysWithValues: (components.queryItems ?? []).compactMap { item in
+                item.value.map { (item.name, $0) }
+            }
+        )
+    }
+
     // MARK: - Apple Sign In
 
     private var currentNonce: String?
@@ -171,6 +246,19 @@ final class AuthViewModel: ObservableObject {
             return "An account with that email already exists. Try signing in."
         }
         return error.localizedDescription
+    }
+}
+
+// MARK: - Google OAuth helpers
+
+enum OAuthError: Error { case missingCallback, missingToken }
+
+private final class WebAuthPresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow } ?? UIWindow()
     }
 }
 

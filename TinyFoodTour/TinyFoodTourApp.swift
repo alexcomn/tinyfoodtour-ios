@@ -46,11 +46,15 @@ struct TinyFoodTourApp: App {
             //                 https://tinyfoodtour.com/u/{handle}
             //                 https://tinyfoodtour.com/walk/{code}
             .onOpenURL { url in
-                if url.scheme == "tinyfoodtour" {
-                    handleCustomScheme(url)
-                } else {
+                guard url.scheme == "tinyfoodtour" else {
                     Task { await handleUniversalLink(url) }
+                    return
                 }
+                // OAuth callback (Google) — ASWebAuthenticationSession captures this
+                // before onOpenURL fires, so we only see it on a cold-start edge case.
+                // Swallow it rather than treating it as a deep-link tour.
+                if url.host == "auth" { return }
+                handleCustomScheme(url)
             }
             // Deep-linked tour (custom scheme + /tour/* universal)
             .sheet(item: $deepLinkedTour) { tour in

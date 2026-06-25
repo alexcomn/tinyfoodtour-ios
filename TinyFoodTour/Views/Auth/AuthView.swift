@@ -35,6 +35,13 @@ struct AuthView: View {
                                 if authVM.currentUser != nil { dismiss() }
                             }
                         }
+
+                        GoogleSignInButton {
+                            Task {
+                                await authVM.signInWithGoogle()
+                                if authVM.currentUser != nil { dismiss() }
+                            }
+                        }
                     }
                     .padding(.horizontal, 24)
 
@@ -109,6 +116,52 @@ struct AuthView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Google Sign-In button
+// Follows Google's brand guidelines: white background, border, Google G logo.
+// Replace the "G" Text with an Image("google-logo") asset if you add the SVG to Assets.xcassets.
+
+struct GoogleSignInButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                // Google G — four-color approximation using a rounded square + text
+                ZStack {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color.white)
+                        .frame(width: 22, height: 22)
+                    Text("G")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.98, green: 0.27, blue: 0.23),  // Google red
+                                    Color(red: 0.06, green: 0.56, blue: 0.94),  // Google blue
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+
+                Text("Continue with Google")
+                    .scaledFont(size: 15, weight: .semibold)
+                    .foregroundColor(Color(red: 0.18, green: 0.18, blue: 0.18))
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 50)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color(UIColor.separator), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
