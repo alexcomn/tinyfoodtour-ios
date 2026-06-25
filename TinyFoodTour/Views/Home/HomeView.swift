@@ -57,26 +57,39 @@ struct HomeView: View {
 
                     // Past tours section
                     if !savedToursVM.savedTours.isEmpty {
-                        Divider()
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Past Tours")
-                                .font(TFTFont.heading(18))
-                                .foregroundColor(Color("TFTSlate"))
-                                .padding(.horizontal, 20)
-                                .padding(.top, 28)
-
-                            ForEach(savedToursVM.savedTours) { tour in
-                                Button {
-                                    selectedTour = tour
-                                } label: {
-                                    SavedTourRow(tour: tour)
+                        VStack(alignment: .leading, spacing: 14) {
+                            // Section header
+                            HStack(alignment: .firstTextBaseline) {
+                                Text("Past Tours")
+                                    .font(TFTFont.heading(20))
+                                    .foregroundColor(Color("TFTSlate"))
+                                Spacer()
+                                Button { showProfile = true } label: {
+                                    Text("See all →")
+                                        .scaledFont(size: 13)
+                                        .foregroundColor(Color("Primary"))
                                 }
                                 .buttonStyle(.plain)
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 28)
+
+                            // Horizontal card scroll
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 14) {
+                                    ForEach(savedToursVM.savedTours.prefix(8)) { tour in
+                                        PastTourCard(tour: tour)
+                                            .onTapGesture { selectedTour = tour }
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 4)
+                            }
                         }
-                        .padding(.bottom, 32)
+                        .padding(.bottom, 36)
+                        .background(Color("Cream"))
                     } else if savedToursVM.isLoading {
-                        ProgressView()
+                        ProgressView().tint(Color("Primary"))
                             .padding(.top, 40)
                     }
                 }
@@ -141,28 +154,120 @@ struct HomeView: View {
     }
 }
 
-struct SavedTourRow: View {
+struct PastTourCard: View {
     let tour: Tour
 
+    private var shortDate: String {
+        let iso = ISO8601DateFormatter()
+        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = iso.date(from: tour.created_at)
+            ?? ISO8601DateFormatter().date(from: tour.created_at)
+        guard let date else { return "" }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MMM d"
+        return fmt.string(from: date)
+    }
+
+    private var vibeLabel: String { tour.vibe.first ?? "" }
+
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(tour.neighborhood)
-                    .scaledFont(size: 15, weight: .semibold)
-                    .foregroundColor(.primary)
-                Text("\(tour.stops.count) stops · \(tour.vibe.first ?? "")")
-                    .scaledFont(size: 13)
-                    .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 0) {
+
+            // ── Stop-colour segment bar ─────────────────────────────
+            GeometryReader { geo in
+                HStack(spacing: 2) {
+                    ForEach(Array(tour.stops.prefix(5).enumerated()), id: \.offset) { i, _ in
+                        StopLabel.color(index: i)
+                            .frame(width: geo.size.width / CGFloat(min(tour.stops.count, 5)),
+                                   height: 5)
+                            .clipShape(Capsule())
+                    }
+                }
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .scaledFont(size: 12)
-                .foregroundColor(.secondary)
+            .frame(height: 5)
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+
+            // ── Neighbourhood + date ────────────────────────────────
+            HStack {
+                Text(tour.neighborhood.uppercased())
+                    .scaledFont(size: 9, weight: .semibold)
+                    .tracking(1.4)
+                    .foregroundColor(Color("Primary"))
+                Spacer()
+                Text(shortDate)
+                    .scaledFont(size: 11)
+                    .foregroundColor(Color("SlateMid"))
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+
+            // ── Tour title ──────────────────────────────────────────
+            Text(tour.displayTitle)
+                .font(TFTFont.heading(17))
+                .foregroundColor(Color("TFTSlate"))
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+
+            Spacer(minLength: 8)
+
+            // ── Stop preview ────────────────────────────────────────
+            VStack(alignment: .leading, spacing: 4) {
+                ForEach(Array(tour.stops.prefix(3).enumerated()), id: \.offset) { i, stop in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(StopLabel.color(index: i))
+                            .frame(width: 5, height: 5)
+                        Text(stop.name)
+                            .scaledFont(size: 11)
+                            .foregroundColor(Color("SlateMid"))
+                            .lineLimit(1)
+                    }
+                }
+                if tour.stops.count > 3 {
+                    Text("+\(tour.stops.count - 3) more")
+                        .scaledFont(size: 10)
+                        .foregroundColor(Color("SlateMid").opacity(0.6))
+                        .padding(.leading, 11)
+                }
+            }
+            .padding(.horizontal, 16)
+
+            // ── Footer ──────────────────────────────────────────────
+            Divider()
+                .padding(.top, 12)
+
+            HStack {
+                HStack(spacing: 4) {
+                    Text("\(tour.stops.count) stops")
+                    if !vibeLabel.isEmpty {
+                        Text("·").foregroundColor(Color("SlateMid").opacity(0.4))
+                        Text(vibeLabel)
+                            .lineLimit(1)
+                    }
+                }
+                .scaledFont(size: 11)
+                .foregroundColor(Color("SlateMid"))
+
+                Spacer()
+
+                Image(systemName: "arrow.right")
+                    .scaledFont(size: 10)
+                    .foregroundColor(Color("Primary").opacity(0.6))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(Color(.systemBackground))
-        Divider().padding(.leading, 20)
+        .frame(width: 256, height: 196)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.07), radius: 10, x: 0, y: 3)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
 }
 

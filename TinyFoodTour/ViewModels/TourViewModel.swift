@@ -110,7 +110,7 @@ final class SavedToursViewModel: ObservableObject {
                     let stops: [TourStop]
                     if let arr = row.stops.value as? [[String: Any]] {
                         stops = arr
-                            .filter { $0["_meta"] as? Bool != true }
+                            .filter { !($0["_meta"] is [String: Any]) }
                             .compactMap { dict in
                                 guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
                                 return try? JSONDecoder().decode(TourStop.self, from: data)
