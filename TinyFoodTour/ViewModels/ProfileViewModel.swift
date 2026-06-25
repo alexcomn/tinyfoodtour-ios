@@ -37,6 +37,9 @@ struct ProfilePhoto: Identifiable {
 @MainActor
 final class ProfileViewModel: ObservableObject {
     @Published var displayName: String = ""
+    @Published var handle: String = ""
+    @Published var bio: String = ""
+    @Published var isPublic: Bool = false
     @Published var editingDisplayName = false
     @Published var displayNameDraft = ""
     @Published var savedTours: [ProfileTour] = []
@@ -61,13 +64,20 @@ final class ProfileViewModel: ObservableObject {
         defer { isLoading = false }
 
         // Profile stats
-        struct ProfileRow: Codable { let completed_tours_count: Int?; let display_name: String? }
+        struct ProfileRow: Codable {
+            let completed_tours_count: Int?; let display_name: String?
+            let handle: String?; let bio: String?; let is_public: Bool?
+        }
         if let rows: [ProfileRow] = try? await supabase.query(
-            table: "profiles", select: "completed_tours_count,display_name",
+            table: "profiles",
+            select: "completed_tours_count,display_name,handle,bio,is_public",
             filters: ["id": "eq.\(userId)"]
         ), let row = rows.first {
             completedToursCount = row.completed_tours_count ?? 0
             displayName = row.display_name ?? ""
+            handle = row.handle ?? ""
+            bio = row.bio ?? ""
+            isPublic = row.is_public ?? false
         }
 
         // Supabase saved_tours is the primary store for signed-in users
@@ -94,7 +104,7 @@ final class ProfileViewModel: ObservableObject {
                 filters: ["id": "eq.\(row.tour_id)"]
             ), let t = tRows.first else { continue }
 
-            let count = (t.stops.value as? [[String: Any]])?.filter { $0["_meta"] as? Bool != true }.count ?? 0
+            let count = (t.stops.value as? [[String: Any]])?.filter { !($0["_meta"] is [String: Any]) }.count ?? 0
             let savedAt = ISO8601DateFormatter().date(from: row.created_at)
             tours.append(ProfileTour(
                 id: t.id, savedTourId: row.id,
@@ -119,11 +129,11 @@ final class ProfileViewModel: ObservableObject {
             // Extract AI title from _meta for a better default name
             var aiTitle: String? = nil
             if let arr = t.stops.value as? [[String: Any]],
-               let meta = arr.first(where: { $0["_meta"] as? Bool == true })?["_meta"] as? [String: Any] {
+               let meta = arr.first(where: { $0["_meta"] is [String: Any] })?["_meta"] as? [String: Any] {
                 aiTitle = meta["tour_title"] as? String
             }
             let name = aiTitle ?? "\(t.neighborhood) Tour"
-            let count = (t.stops.value as? [[String: Any]])?.filter { $0["_meta"] as? Bool != true }.count ?? 0
+            let count = (t.stops.value as? [[String: Any]])?.filter { !($0["_meta"] is [String: Any]) }.count ?? 0
 
             // Insert to Supabase (savedTourId comes back on next load)
             try? await supabase.insert(
@@ -154,7 +164,7 @@ final class ProfileViewModel: ObservableObject {
 
         allTours = historyRows.map { row in
             let count = (row.stops.value as? [[String: Any]])?
-                .filter { $0["_meta"] as? Bool != true }.count ?? 0
+                .filter { !($0["_meta"] is [String: Any]) }.count ?? 0
             let savedAt = ISO8601DateFormatter().date(from: row.created_at)
             let savedTourId = tours.first(where: { $0.id == row.id })?.savedTourId
             return ProfileTour(
@@ -226,6 +236,13 @@ final class ProfileViewModel: ObservableObject {
                 }
             }
         }
+    }
+
+    // MARK: - Settings save callback
+    func applySettingsSave(handle newHandle: String, bio newBio: String, isPublic newIsPublic: Bool) {
+        handle = newHandle
+        bio = newBio
+        isPublic = newIsPublic
     }
 
     // MARK: - Display name

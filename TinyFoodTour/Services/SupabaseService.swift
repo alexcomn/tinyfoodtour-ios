@@ -90,6 +90,18 @@ final class SupabaseService {
         try validateResponse(response, data: data)
     }
 
+    // MARK: - Postgres RPC
+    // Calls a stored procedure at /rest/v1/rpc/:function (not an Edge Function).
+    func callRPC<T: Decodable>(function: String, body: [String: Any]) async throws -> T {
+        var request = URLRequest(url: URL(string: "\(supabaseURL)/rest/v1/rpc/\(function)")!)
+        request.httpMethod = "POST"
+        baseHeaders().forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try validateResponse(response, data: data)
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
     // MARK: - Edge Functions
     func invokeFunction<T: Decodable>(name: String, body: [String: Any]) async throws -> T {
         var request = URLRequest(url: URL(string: "\(supabaseURL)/functions/v1/\(name)")!)

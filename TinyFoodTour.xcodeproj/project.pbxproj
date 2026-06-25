@@ -50,6 +50,9 @@
 		996BBDC49E8142F3B5B114F0 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F08779155AC4095B52342F9 /* Toast.swift */; };
 		5A580E50925A4AEAB89E838D /* ReactionsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562F14CBDA144DF1B95D21B4 /* ReactionsService.swift */; };
 		6FFA92B2957E4A35862622AE /* ReactionBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = A972FA39E29C428FA59F8141 /* ReactionBar.swift */; };
+		5005B807866345D3AFFACC17 /* BadgesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C38002EE7A346FF9E0EE3F3 /* BadgesService.swift */; };
+		72289EFA8BCE45E1993B1A08 /* ProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5470720AB6847F9AF2AB7D6 /* ProfileSettingsView.swift */; };
+		E8B0A9B7DEE24E429033C265 /* PublicProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41AAAAE5EBF4FA18A3214C5 /* PublicProfileView.swift */; };
 		/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,6 +102,9 @@
 		4F08779155AC4095B52342F9 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		562F14CBDA144DF1B95D21B4 /* ReactionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactionsService.swift; sourceTree = "<group>"; };
 		A972FA39E29C428FA59F8141 /* ReactionBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactionBar.swift; sourceTree = "<group>"; };
+		0C38002EE7A346FF9E0EE3F3 /* BadgesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BadgesService.swift; sourceTree = "<group>"; };
+		F5470720AB6847F9AF2AB7D6 /* ProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsView.swift; sourceTree = "<group>"; };
+		F41AAAAE5EBF4FA18A3214C5 /* PublicProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicProfileView.swift; sourceTree = "<group>"; };
 		/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +132,7 @@
 			children = (
 				D4B182BEC1894397AC2A5312 /* SupabaseService.swift */,
 				562F14CBDA144DF1B95D21B4 /* ReactionsService.swift */,
+				0C38002EE7A346FF9E0EE3F3 /* BadgesService.swift */,
 				59EA5FF0BCF54F02BA30304A /* LocationService.swift */,
 			);
 			path = Services;
@@ -195,6 +202,8 @@
 			children = (
 				C1A2FF8EDA77494A8FED0675 /* AuthView.swift */,
 				A606A134C3264D6491CE049C /* ProfileView.swift */,
+				F5470720AB6847F9AF2AB7D6 /* ProfileSettingsView.swift */,
+				F41AAAAE5EBF4FA18A3214C5 /* PublicProfileView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -380,6 +389,9 @@
 				D48942F75DD048C592E40326 /* QuizStep.swift in Sources */,
 				2A86B21EA7FB44B98E972B87 /* SupabaseService.swift in Sources */,
 					5A580E50925A4AEAB89E838D /* ReactionsService.swift in Sources */,
+					5005B807866345D3AFFACC17 /* BadgesService.swift in Sources */,
+					72289EFA8BCE45E1993B1A08 /* ProfileSettingsView.swift in Sources */,
+					E8B0A9B7DEE24E429033C265 /* PublicProfileView.swift in Sources */,
 					6FFA92B2957E4A35862622AE /* ReactionBar.swift in Sources */,
 				55BC3FB907A14FED899506C3 /* LocationService.swift in Sources */,
 				9B5F4E2089F642BBADECD0D2 /* AuthViewModel.swift in Sources */,

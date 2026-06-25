@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Thin Identifiable wrappers so optional-binding sheet works with String values.
+struct HandleRoute: Identifiable { let id: String }   // id = handle
+
 @main
 struct TinyFoodTourApp: App {
     @StateObject private var authVM = AuthViewModel()
@@ -7,8 +10,8 @@ struct TinyFoodTourApp: App {
     @State private var deepLinkedTour: Tour?
 
     // Universal Link destinations (set by handleUniversalLink)
-    @State private var universalLinkHandle: String?    // /u/:handle
-    @State private var universalLinkWalkCode: String?  // /walk/:code
+    @State private var handleRoute: HandleRoute?       // /u/:handle  → M3
+    @State private var universalLinkWalkCode: String?  // /walk/:code → M5
 
     init() {
         UIScrollView.appearance().alwaysBounceVertical = true
@@ -63,8 +66,11 @@ struct TinyFoodTourApp: App {
                         }
                 }
             }
-            // TODO M3: .sheet(item: $universalLinkHandle) { PublicProfileView(handle: $0) }
-            // TODO M5: .sheet(item: $universalLinkWalkCode) { WalkTogetherView(code: $0)  }
+            .sheet(item: $handleRoute) { route in
+                PublicProfileView(handle: route.id)
+                    .environmentObject(authVM)
+            }
+            // TODO M5: .sheet(item: $universalLinkWalkCode) { WalkTogetherView(code: $0) }
         }
     }
 
@@ -102,9 +108,8 @@ struct TinyFoodTourApp: App {
             }
 
         case "u":
-            // Public profile: /u/{handle} — wired up in M3
             if let handle = parts[safe: 1] {
-                universalLinkHandle = handle
+                handleRoute = HandleRoute(id: handle)
             }
 
         case "walk":

@@ -9,12 +9,17 @@ struct ProfileView: View {
     @State private var renamingToken: String?
     @State private var renameDraft = ""
     @State private var selectedPhoto: ProfilePhoto?
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     profileHeader
+                    if !BadgesService.earned(completedCount: vm.completedToursCount).isEmpty {
+                        Divider().padding(.vertical, 4)
+                        badgesRow
+                    }
                     statsRow
                     Divider().padding(.vertical, 8)
                     savedToursSection
@@ -39,9 +44,27 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .scaledFont(size: 15)
+                            .foregroundColor(Color("SlateMid"))
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                         .foregroundColor(Color("Primary"))
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                if let userId = authVM.currentUser?.id {
+                    ProfileSettingsView(
+                        userId: userId,
+                        currentHandle: vm.handle,
+                        currentBio: vm.bio,
+                        currentIsPublic: vm.isPublic,
+                        onSave: { h, b, pub in vm.applySettingsSave(handle: h, bio: b, isPublic: pub) }
+                    )
                 }
             }
             .sheet(item: $selectedTour) { tour in
@@ -129,10 +152,22 @@ struct ProfileView: View {
                 }
             }
 
-            if let email = authVM.currentUser?.email {
+            if !vm.handle.isEmpty {
+                Text("@\(vm.handle)")
+                    .scaledFont(size: 13)
+                    .foregroundColor(Color("SlateMid"))
+            } else if let email = authVM.currentUser?.email {
                 Text(email)
                     .scaledFont(size: 13)
                     .foregroundColor(Color("SlateMid"))
+            }
+
+            if !vm.bio.isEmpty {
+                Text(vm.bio)
+                    .scaledFont(size: 13)
+                    .foregroundColor(Color("TFTSlate"))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
             }
         }
         .padding(.horizontal, 20)
@@ -140,6 +175,31 @@ struct ProfileView: View {
         .padding(.bottom, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color("PizzaCrust"))
+    }
+
+    // MARK: - Badges
+    private var badgesRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("BADGES")
+                .scaledFont(size: 11, weight: .semibold)
+                .foregroundColor(Color("SlateMid"))
+                .tracking(1.5)
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(BadgesService.earned(completedCount: vm.completedToursCount)) { badge in
+                        BadgePill(badge: badge)
+                    }
+                    if let next = BadgesService.nextUnearned(completedCount: vm.completedToursCount) {
+                        BadgePill(badge: next, locked: true)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+            }
+        }
     }
 
     // MARK: - Stats
